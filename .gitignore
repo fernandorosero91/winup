@@ -27,3 +27,7 @@ hs_err_pid*
 
 # Firebase Android config (contains project API key)
 android/app/google-services.json
+
+# Release signing material (keystore and passwords)
+android/keystore.properties
+android/keystore/
