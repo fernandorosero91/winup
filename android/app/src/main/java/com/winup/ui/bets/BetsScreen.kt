@@ -144,13 +144,21 @@ private fun BetCard(bet: Bet) {
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = if (bet.status == "GANADA") "Ganancia" else "Potencial",
+                        text = when (bet.status) {
+                            "GANADA" -> "Ganancia"
+                            "ANULADA" -> "Reembolso"
+                            else -> "Potencial"
+                        },
                         color = extras.muted,
                         fontSize = 10.sp,
                     )
                     Text(
                         text = formatCop(bet.potential),
-                        color = if (bet.status == "GANADA") extras.success else MaterialTheme.colorScheme.onSurface,
+                        color = when (bet.status) {
+                            "GANADA" -> extras.success
+                            "ANULADA" -> extras.muted
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
