@@ -6,6 +6,7 @@ import com.winup.entity.PaymentIntentEntity;
 import com.winup.entity.WalletEntity;
 import com.winup.exception.ValidationException;
 import com.winup.model.vo.DepositAmount;
+import com.winup.model.vo.IdempotencyKey;
 import com.winup.dto.DepositDto;
 import com.winup.dto.DepositRequest;
 import com.winup.service.payment.CheckoutSession;
@@ -58,10 +59,11 @@ public class PaymentService {
 
     @Transactional
     public DepositDto createDeposit(String userId, DepositRequest request, String idempotencyKey) {
-        if (request == null || request.amount() == null || idempotencyKey == null || idempotencyKey.isBlank()) {
+        if (request == null || request.amount() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos de depósito incompletos");
         }
-        PaymentIntentEntity existing = intentRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+        IdempotencyKey key = new IdempotencyKey(idempotencyKey);
+        PaymentIntentEntity existing = intentRepository.findByIdempotencyKey(key.value()).orElse(null);
         if (existing != null) {
             return toDto(existing);
         }
@@ -76,7 +78,7 @@ public class PaymentService {
         intent.setAmountCop(amount.amount());
         intent.setProvider(gateway.provider());
         intent.setExternalReference(intent.getId().toString());
-        intent.setIdempotencyKey(idempotencyKey);
+        intent.setIdempotencyKey(key.value());
         intent.setCreatedAt(now);
         intent.setUpdatedAt(now);
         intentRepository.save(intent);

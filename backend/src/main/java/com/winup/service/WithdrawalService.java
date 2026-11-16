@@ -7,6 +7,7 @@ import com.winup.entity.WalletEntity;
 import com.winup.entity.WithdrawalEntity;
 import com.winup.exception.ValidationException;
 import com.winup.mapper.WithdrawalMapper;
+import com.winup.model.vo.IdempotencyKey;
 import com.winup.model.vo.WithdrawalAmount;
 import com.winup.repository.WalletRepository;
 import com.winup.repository.WithdrawalRepository;
@@ -53,8 +54,11 @@ public class WithdrawalService {
 
     @Transactional
     public WithdrawalDto create(String userId, WithdrawalRequest request, String idempotencyKey) {
-        validate(request, idempotencyKey);
-        WithdrawalEntity existing = withdrawalRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+        if (request == null || request.amount() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos de retiro incompletos");
+        }
+        IdempotencyKey key = new IdempotencyKey(idempotencyKey);
+        WithdrawalEntity existing = withdrawalRepository.findByIdempotencyKey(key.value()).orElse(null);
         if (existing != null) {
             return WithdrawalMapper.toDto(existing);
         }
@@ -64,7 +68,7 @@ public class WithdrawalService {
         ensureDailyLimit(userId, amount.amount());
         ensureBalance(wallet, amount.amount());
 
-        WithdrawalEntity withdrawal = newWithdrawal(userId, amount, request, idempotencyKey);
+        WithdrawalEntity withdrawal = newWithdrawal(userId, amount, request, key.value());
         payoutExecutor.hold(wallet, withdrawal);
         withdrawalRepository.save(withdrawal);
 
@@ -141,12 +145,6 @@ public class WithdrawalService {
         withdrawal.setCreatedAt(now);
         withdrawal.setUpdatedAt(now);
         return withdrawal;
-    }
-
-    private void validate(WithdrawalRequest request, String idempotencyKey) {
-        if (request == null || request.amount() == null || idempotencyKey == null || idempotencyKey.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos de retiro incompletos");
-        }
     }
 
     private void ensureBalance(WalletEntity wallet, BigDecimal amount) {

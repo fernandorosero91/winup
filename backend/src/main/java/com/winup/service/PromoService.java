@@ -3,6 +3,8 @@ package com.winup.service;
 import com.winup.entity.PromoCampaignEntity;
 import com.winup.dto.CreatePromoRequest;
 import com.winup.dto.PromoCampaignDto;
+import com.winup.model.vo.PromoDetail;
+import com.winup.model.vo.PromoTitle;
 import com.winup.repository.PromoCampaignRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,6 @@ import java.util.UUID;
 
 @Service
 public class PromoService {
-    private static final int MAX_TITLE = 140;
-    private static final int MAX_DETAIL = 280;
-
     private final PromoCampaignRepository repository;
     private final EventPublisher eventPublisher;
     private final Clock clock;
@@ -41,8 +40,8 @@ public class PromoService {
 
     @Transactional
     public PromoCampaignDto create(CreatePromoRequest request, String createdBy) {
-        String title = requireText(request.title(), "El título es obligatorio", MAX_TITLE);
-        String detail = requireText(request.detail(), "El mensaje es obligatorio", MAX_DETAIL);
+        String title = new PromoTitle(request.title()).value();
+        String detail = new PromoDetail(request.detail()).value();
         Instant now = clock.instant();
         Instant scheduledAt = request.scheduledAt() == null ? now : request.scheduledAt();
 
@@ -87,17 +86,6 @@ public class PromoService {
                     "Solo se pueden cancelar promociones programadas"
             );
         }
-    }
-
-    private String requireText(String value, String message, int maxLength) {
-        if (value == null || value.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, message);
-        }
-        String trimmed = value.trim();
-        if (trimmed.length() > maxLength) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Texto demasiado largo");
-        }
-        return trimmed;
     }
 
     private PromoCampaignDto toDto(PromoCampaignEntity campaign) {

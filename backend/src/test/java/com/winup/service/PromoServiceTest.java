@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.PromoCampaignEntity;
+import com.winup.exception.ValidationException;
 import com.winup.dto.CreatePromoRequest;
 import com.winup.repository.PromoCampaignRepository;
 import org.junit.jupiter.api.Test;
@@ -89,7 +90,7 @@ class PromoServiceTest {
         assertThatThrownBy(() -> service().create(
                 new CreatePromoRequest(" ", "Deposita y recibe un bono", null),
                 "admin-1"
-        )).isInstanceOf(ResponseStatusException.class);
+        )).isInstanceOf(ValidationException.class);
     }
 
     @Test
