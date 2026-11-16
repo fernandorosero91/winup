@@ -135,7 +135,7 @@ services:
     security_opt:
       - no-new-privileges:true
     deploy:
-      replicas: 1
+      replicas: 2
       resources:
         limits:
           cpus: "1.0"
