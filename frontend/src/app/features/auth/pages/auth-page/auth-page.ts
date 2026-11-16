@@ -1,6 +1,6 @@
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthStore } from '../../../../core/auth/auth-store';
@@ -19,7 +19,6 @@ export class AuthPage {
   readonly mode = input<AuthMode>('login');
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
   private readonly forms = inject(FormBuilder);
 
   readonly loading = signal(false);
@@ -79,8 +78,7 @@ export class AuthPage {
     request.subscribe({
       next: () => {
         this.loading.set(false);
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        this.router.navigateByUrl(returnUrl?.startsWith('/') ? returnUrl : '/inicio');
+        this.router.navigateByUrl('/inicio');
       },
       error: (error: unknown) => {
         this.loading.set(false);
