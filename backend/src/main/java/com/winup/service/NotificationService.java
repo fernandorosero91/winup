@@ -2,8 +2,10 @@ package com.winup.service;
 
 import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
+import com.winup.entity.NotificationClearEntity;
 import com.winup.entity.NotificationEntity;
 import com.winup.dto.NotificationDto;
+import com.winup.repository.NotificationClearRepository;
 import com.winup.repository.NotificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,15 +28,24 @@ public class NotificationService {
     private static final Locale COLOMBIA = Locale.forLanguageTag("es-CO");
 
     private final NotificationRepository repository;
+    private final NotificationClearRepository clearRepository;
     private final Clock clock;
 
-    public NotificationService(NotificationRepository repository, Clock clock) {
+    public NotificationService(
+            NotificationRepository repository,
+            NotificationClearRepository clearRepository,
+            Clock clock
+    ) {
         this.repository = repository;
+        this.clearRepository = clearRepository;
         this.clock = clock;
     }
 
     public List<NotificationDto> list(String userId) {
-        return repository.findByUserIdOrUserIdIsNullOrderByCreatedAtDesc(userId).stream()
+        Instant clearedAt = clearRepository.findById(userId)
+                .map(NotificationClearEntity::getClearedAt)
+                .orElse(Instant.EPOCH);
+        return repository.findVisible(userId, clearedAt).stream()
                 .map(this::toDto)
                 .toList();
     }

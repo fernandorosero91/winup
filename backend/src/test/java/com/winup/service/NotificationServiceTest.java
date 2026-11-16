@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.NotificationEntity;
+import com.winup.repository.NotificationClearRepository;
 import com.winup.repository.NotificationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,10 +14,12 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,9 +33,12 @@ class NotificationServiceTest {
     @Mock
     private NotificationRepository repository;
 
+    @Mock
+    private NotificationClearRepository clearRepository;
+
     @Test
     void should_store_a_win_notification_for_the_user() {
-        new NotificationService(repository, Clock.fixed(NOW, ZoneOffset.UTC)).recordResult(
+        service().recordResult(
                 "user-1",
                 BET_ID,
                 MATCH_ID,
@@ -55,7 +61,7 @@ class NotificationServiceTest {
 
     @Test
     void should_store_a_loss_notification_for_the_user() {
-        new NotificationService(repository, Clock.fixed(NOW, ZoneOffset.UTC)).recordResult(
+        service().recordResult(
                 "user-1",
                 BET_ID,
                 MATCH_ID,
@@ -76,7 +82,7 @@ class NotificationServiceTest {
     void should_not_duplicate_a_result_notification_for_the_same_bet() {
         when(repository.existsByBetIdAndKind(BET_ID, "GANADA")).thenReturn(true);
 
-        new NotificationService(repository, Clock.fixed(NOW, ZoneOffset.UTC)).recordResult(
+        service().recordResult(
                 "user-1",
                 BET_ID,
                 MATCH_ID,
@@ -90,7 +96,7 @@ class NotificationServiceTest {
 
     @Test
     void should_store_a_global_promotion_for_every_user() {
-        new NotificationService(repository, Clock.fixed(NOW, ZoneOffset.UTC)).recordPromotion(
+        service().recordPromotion(
                 "Bono de bienvenida",
                 "Deposita y recibe un bono del 20 por ciento"
         );
@@ -105,10 +111,18 @@ class NotificationServiceTest {
 
     @Test
     void should_ignore_a_promotion_without_title() {
-        new NotificationService(repository, Clock.fixed(NOW, ZoneOffset.UTC))
+        service()
                 .recordPromotion(" ", "texto");
 
         verify(repository, never()).save(any());
+    }
+
+    private NotificationService service() {
+        return new NotificationService(
+                repository,
+                clearRepository,
+                Clock.fixed(NOW, ZoneOffset.UTC)
+        );
     }
 
     @Test
@@ -121,11 +135,11 @@ class NotificationServiceTest {
         notification.setDetail("Gen.G vs T1 · $ 9.250,00 acreditados en tu cartera");
         notification.setAmount(new BigDecimal("9250.00"));
         notification.setCreatedAt(NOW);
-        when(repository.findByUserIdOrUserIdIsNullOrderByCreatedAtDesc("user-1"))
+        when(clearRepository.findById("user-1")).thenReturn(Optional.empty());
+        when(repository.findVisible(eq("user-1"), any(Instant.class)))
                 .thenReturn(List.of(notification));
 
-        var result = new NotificationService(repository, Clock.fixed(NOW, ZoneOffset.UTC))
-                .list("user-1");
+        var result = service().list("user-1");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).kind()).isEqualTo("GANADA");

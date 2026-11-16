@@ -13,6 +13,8 @@ public interface NotificationReadRepository extends JpaRepository<NotificationRe
     @Query("select n.notificationId from NotificationReadEntity n where n.userId = :userId")
     List<String> findNotificationIdsByUserId(@Param("userId") String userId);
 
+    void deleteByUserId(String userId);
+
     @Modifying
     @Query(value = """
             insert into notification_read (id, user_id, notification_id, read_at)

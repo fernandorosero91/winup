@@ -22,6 +22,7 @@ describe('WinupData', () => {
     vi.spyOn(api, 'notifications').mockReturnValue(of([]));
     vi.spyOn(api, 'readNotifications').mockReturnValue(of([]));
     vi.spyOn(api, 'markNotificationsRead').mockReturnValue(of(void 0));
+    vi.spyOn(api, 'clearNotifications').mockReturnValue(of(void 0));
   });
 
   it('maps money strings from the wallet response to numbers', () => {
@@ -178,6 +179,19 @@ describe('WinupData', () => {
 
     expect(service.unreadNotifications()).toBe(0);
     expect(api.markNotificationsRead).toHaveBeenCalledWith(['n-1', 'n-2']);
+  });
+
+  it('clears notifications and read markers', () => {
+    service.serverNotifications.set([
+      { id: 'n-1', kind: 'PENDIENTE', title: 'A', detail: 'B', date: '10:00', icon: 'lucideClock3' },
+    ]);
+    service.readNotifications.set(['n-1']);
+
+    service.clearNotifications();
+
+    expect(service.notifications()).toEqual([]);
+    expect(service.readNotifications()).toEqual([]);
+    expect(api.clearNotifications).toHaveBeenCalled();
   });
 
   it('restores the read ids persisted on the server', () => {

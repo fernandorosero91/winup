@@ -40,4 +40,11 @@ export class NotificationsPage {
   markOne(id: string): void {
     this.data.markNotificationRead(id);
   }
+
+  clearAll(): void {
+    if (this.data.notifications().length === 0) {
+      return;
+    }
+    this.data.clearNotifications();
+  }
 }

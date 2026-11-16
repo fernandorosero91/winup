@@ -59,6 +59,10 @@ export class WinupApi {
     return this.http.post<void>(`${this.base}/notifications/read`, { ids });
   }
 
+  clearNotifications(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/notifications`);
+  }
+
   placeBet(matchId: string, selection: string, stake: number): Observable<Bet> {
     return this.http
       .post<BetResponse>(
