@@ -51,12 +51,23 @@ service → model
 
 `model` es dominio puro: no importa Spring, Kafka, Rabbit, JPA, HTTP ni JSON.
 
+`model` y `entity` no son lo mismo:
+
+- `entity` es la representación relacional: clases mutables con anotaciones JPA.
+- `model` es el dominio: objetos inmutables y comportamiento de negocio.
+- Los records de validación y valor viven en `model/vo`.
+- Los records de contrato HTTP viven en `dto`.
+- Los records de configuración viven en `config`, junto a `@ConfigurationProperties`.
+- `Bet` permanece en `model/match` porque es la entidad del agregado, no un value object.
+
 ### Paquetes del backend
 
 | Paquete | Responsabilidad |
 |---|---|
-| `model` | Agregados, estados y value objects del dominio |
-| `entity` | Entidades JPA |
+| `model` | Dominio puro: agregados, estados, estrategia y value objects |
+| `model/vo` | Records inmutables: IDs, dinero y validaciones reutilizables |
+| `model/match` | `MatchAggregate`, patrón State, Strategy y `Bet` como entidad del agregado |
+| `entity` | Clases JPA que mapean tablas; no son records |
 | `repository` | Spring Data JPA |
 | `service` | Casos de uso, motor, pagos, ledger y mensajería |
 | `controller` | REST, administración, webhooks y WebSocket |
@@ -189,6 +200,8 @@ Los `POST` críticos exigen `Idempotency-Key`. Cada apuesta liquidada incluye un
 - Token web en `sessionStorage`; Android en `EncryptedSharedPreferences`.
 - Sin secretos en el repositorio: todo por variables de entorno.
 - Validación en el borde (DTO) y en el dominio.
+- Las validaciones reutilizables viven en `model/vo` como `record` con constructores compactos (`Odds`, `TeamName`, `LeagueName`, `IdempotencyKey`, `Stake`, `DepositAmount`, `WithdrawalAmount`).
+- `Idempotency-Key` es obligatoria en apuestas, depósitos y retiros; se valida en el dominio.
 
 ### Autenticación de la API
 
@@ -223,9 +236,105 @@ Una API key estática no protege una app móvil: viaja dentro del APK y se puede
 - `BuildConfig.API_BASE_URL` apunta por defecto a `https://winup.site/`.
 - En local: `./gradlew :app:assembleDebug -Pwinup.apiBaseUrl=http://127.0.0.1:8080/` con `adb reverse tcp:8080 tcp:8080`.
 
+## Datos deportivos
+
+El modo por defecto es `random`: el generador actual sigue creando partidos y cuotas. El puerto `SportsProvider` y los adaptadores `ReplaySportsAdapter`, `ApiFootballAdapter` y `FootballdataAdapter` ya existen. La ingesta está desactivada por defecto:
+
+```dotenv
+WINUP_SPORTS_INGESTION_ENABLED=true
+WINUP_SPORTS_PROVIDER=replay
+WINUP_SPORTS_QUOTA_STORE=jdbc
+```
+
+Con `api-football` se consulta API-Football y se piden las cuotas que falten con el guard de cuota. La cuota se guarda en `provider_quota` y se comparte entre instancias; `memory` solo se usa en pruebas. Cada cambio de cuota queda en `match_odds_snapshot`. Un partido cancelado por el proveedor pasa a `VOID` y reembolsa las apuestas pendientes. Web y Android muestran el badge `SIMULADO`, `REPLAY` o `API`. `random` sigue siendo el modo de demo y no se elimina.
+
+### Activar Footballdata.io (recomendado para datos actuales)
+
+El plan Free incluye 5 ligas y temporadas actuales. Para WINUP se validó con La Liga 2026/2027:
+
+```dotenv
+WINUP_FOOTBALLDATA_BASE_URL=https://footballdata.io/api/v1
+WINUP_FOOTBALLDATA_API_KEY=tu-clave
+WINUP_FOOTBALLDATA_LEAGUE_ID=10
+WINUP_FOOTBALLDATA_SEASON_ID=117065
+WINUP_FOOTBALLDATA_LANGUAGE=es
+WINUP_SPORTS_PROVIDER=footballdata
+WINUP_SPORTS_INGESTION_ENABLED=true
+WINUP_SPORTS_INGESTION_INTERVAL_MS=3600000
+WINUP_SPORTS_INGESTION_LOOKAHEAD_HOURS=168
+```
+
+El plan Free tiene 1.000 peticiones al mes y 5 ligas. Con una ingesta por hora se usan unas 720 peticiones al mes. La cuota se lee de `meta.requests_remaining` y el cliente se detiene al 5 %. La Free exige atribución a Footballdata.io en la UI.
+
+Smoke real:
+
+```bash
+set -a
+source .env
+set +a
+./backend/mvnw -Plive -Dtest=FootballdataLiveTest test
+```
+
+### Partidos en vivo
+
+La UI muestra liga, badge, minuto, marcador y cuotas. Las actualizaciones de score y minuto llegan por WebSocket (`notify.dashboard.*`). Cuando un partido deja de estar próximo o termina, la web vuelve a consultar el filtro activo para no dejar partidos en la pestaña equivocada.
+
+Para actualizar partidos reales en vivo:
+
+```dotenv
+WINUP_SPORTS_INGESTION_LIVE_ENABLED=true
+WINUP_SPORTS_INGESTION_LIVE_INTERVAL_MS=60000
+```
+
+La ingesta en vivo consulta el endpoint live del proveedor, actualiza el marcador y publica el cambio al dashboard. El plan Free de Footballdata.io tiene 1.000 peticiones al mes: a 60 segundos se agotan en menos de un día. Para una demo corta se puede activar solo durante la ventana del partido; para producción se necesita Starter o superior. Con el plan Free, dejar `WINUP_SPORTS_INGESTION_LIVE_ENABLED=false` y usar `random` para la simulación en vivo es lo seguro.
+
+### Activar API-Football en local
+
+En `.env`:
+
+```dotenv
+WINUP_API_FOOTBALL_BASE_URL=https://v3.football.api-sports.io
+WINUP_API_FOOTBALL_KEY=tu-clave
+WINUP_API_FOOTBALL_LEAGUE_ID=140
+WINUP_API_FOOTBALL_SEASON=2026
+WINUP_SPORTS_PROVIDER=api-football
+WINUP_SPORTS_INGESTION_ENABLED=true
+```
+
+Luego:
+
+```bash
+docker compose up -d --build backend
+curl -s http://localhost:8080/api/v1/health/providers
+```
+
+El health responde sin exponer la clave e indica proveedor, disponibilidad y cuota restante. La ingesta crea o actualiza partidos en `matches`, guarda la procedencia en `provider_match` y la cuota en `match_odds_snapshot`.
+
+El smoke test contra API-Football está etiquetado `live` y no corre por defecto:
+
+```bash
+set -a
+source .env
+set +a
+./backend/mvnw -Plive -Dtest=ApiFootballLiveTest test
+```
+
+Para validar una temporada histórica con el plan gratuito:
+
+```bash
+WINUP_API_FOOTBALL_SEASON=2024 \
+WINUP_API_FOOTBALL_SMOKE_FROM=2024-11-01T00:00:00Z \
+WINUP_API_FOOTBALL_SMOKE_TO=2024-11-10T23:59:59Z \
+./backend/mvnw -Plive -Dtest=ApiFootballLiveTest test
+```
+
+El plan gratuito de API-Football solo permite temporadas 2022–2024. Para la temporada actual hace falta un plan de pago. En las temporadas históricas del plan gratuito la cobertura de cuotas (`coverage.odds`) puede ser falsa, así que la ingesta omite esos partidos para no mezclar fixtures reales con cuotas simuladas.
+
+Si el plan contratado no incluye el endpoint `/odds`, la ingesta omite los partidos nuevos sin cuotas para no mezclar datos reales con cuotas simuladas. En ese caso hay que elegir una liga/temporada con cuotas disponibles o definir una estrategia de cuotas propias en una spec aparte.
+
 ## Datos
 
-Tablas principales: `app_user`, `wallet`, `movements`, `match`, `bet`, `ledger_entry`, `payment_intent`, `payment_event`, `withdrawal`, `notification`, `notification_read`, `device_token`, `promo_campaign`, `outbox_event`, `processed_event`.
+Tablas principales: `app_user`, `wallet`, `movements`, `matches`, `bets`, `ledger_entry`, `payment_intent`, `payment_event`, `withdrawal`, `notification`, `notification_read`, `device_token`, `promo_campaign`, `outbox_event`, `processed_events`, `provider_match`, `provider_quota`, `match_odds_snapshot`.
 
 El esquema lo gestiona Hibernate con `ddl-auto=update`.
 
