@@ -73,6 +73,7 @@ import com.winup.money.formatCop
 import com.winup.money.formatCopWhole
 import com.winup.ui.auth.AuthScreen
 import com.winup.ui.bets.BetsScreen
+import com.winup.ui.components.WinUpLoader
 import com.winup.ui.components.WinUpLogo
 import com.winup.ui.home.HomeScreen
 import com.winup.ui.live.LiveScreen
@@ -119,14 +120,23 @@ fun WinUpRoot() {
         val scope = rememberCoroutineScope()
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val token = WinUpSession.token.value
+        var bootstrapping by remember { mutableStateOf(token != null) }
 
         LaunchedEffect(token) {
             if (token == null) {
                 RealtimeClient.stop()
                 WinUpData.clear()
+                bootstrapping = false
             } else {
+                bootstrapping = true
+                val startedAt = System.currentTimeMillis()
                 WinUpData.refresh(WinUpSession.api)
                 NotificationAnnouncer.announce(context, WinUpData.notifications)
+                val elapsed = System.currentTimeMillis() - startedAt
+                if (elapsed < 900L) {
+                    delay(900L - elapsed)
+                }
+                bootstrapping = false
                 RealtimeClient.onNotificationsUpdated = {
                     scope.launch {
                         val before = WinUpData.notifications.firstOrNull()?.id
@@ -158,7 +168,9 @@ fun WinUpRoot() {
             }
         }
 
-        if (token == null) {
+        if (bootstrapping) {
+            WinUpLoader()
+        } else if (token == null) {
             AuthScreen(
                 darkTheme = darkTheme,
                 onToggleTheme = {

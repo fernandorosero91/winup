@@ -1,3 +1,4 @@
 <resources>
     <color name="winup_window_background">#101B2B</color>
+    <color name="winup_splash_background">#101B2B</color>
 </resources>

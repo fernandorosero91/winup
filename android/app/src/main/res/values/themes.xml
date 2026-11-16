@@ -6,4 +6,10 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>
+    <style name="Theme.WinUp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/winup_splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/mark_winup_dark</item>
+        <item name="windowSplashScreenAnimationDuration">600</item>
+        <item name="postSplashScreenTheme">@style/Theme.WinUp</item>
+    </style>
 </resources>
