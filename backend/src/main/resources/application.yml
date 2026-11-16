@@ -1,0 +1,125 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: winup-backend
+  mail:
+    host: ${WINUP_SMTP_HOST:smtp.gmail.com}
+    port: ${WINUP_SMTP_PORT:587}
+    username: ${WINUP_SMTP_USERNAME:}
+    password: ${WINUP_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/winup}
+    username: ${SPRING_DATASOURCE_USERNAME:winup}
+    password: ${SPRING_DATASOURCE_PASSWORD:winup}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: winup-engine
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        isolation.level: read_committed
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+    listener:
+      ack-mode: manual_immediate
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        acknowledge-mode: auto
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          multiplier: 2
+          max-interval: 10s
+
+winup:
+  public-url: ${WINUP_PUBLIC_URL:http://localhost:4200}
+  security:
+    jwt-secret: ${WINUP_JWT_SECRET:}
+    jwt-ttl-minutes: ${WINUP_JWT_TTL_MINUTES:120}
+    allowed-origins: ${WINUP_ALLOWED_ORIGINS:http://localhost:4200,http://127.0.0.1:4200}
+  generator:
+    enabled: ${WINUP_GENERATOR_ENABLED:true}
+    live-per-sport: ${WINUP_GENERATOR_LIVE_PER_SPORT:5}
+    max-per-tick: ${WINUP_GENERATOR_MAX_PER_TICK:42}
+    interval-ms: ${WINUP_GENERATOR_INTERVAL_MS:5000}
+  scheduler:
+    enabled: ${WINUP_SCHEDULER_ENABLED:true}
+    interval-ms: ${WINUP_SCHEDULER_INTERVAL_MS:30000}
+  mail:
+    enabled: ${WINUP_MAIL_ENABLED:true}
+    from: ${WINUP_MAIL_FROM:WINUP <no-reply@winup.app>}
+  push:
+    provider: ${WINUP_PUSH_PROVIDER:realtime}
+    fcm:
+      project-id: ${WINUP_FCM_PROJECT_ID:}
+      client-email: ${WINUP_FCM_CLIENT_EMAIL:}
+      private-key: ${WINUP_FCM_PRIVATE_KEY:}
+  watchdog:
+    enabled: ${WINUP_WATCHDOG_ENABLED:true}
+    interval-ms: ${WINUP_WATCHDOG_INTERVAL_MS:60000}
+    grace-ms: ${WINUP_WATCHDOG_GRACE_MS:180000}
+  random:
+    seed: ${WINUP_RANDOM_SEED:2026}
+    count: ${WINUP_RANDOM_COUNT:300}
+  replay:
+    enabled: ${WINUP_REPLAY_ENABLED:true}
+  payments:
+    provider: ${WINUP_PAYMENTS_PROVIDER:simulator}
+    payout-provider: ${WINUP_PAYOUT_PROVIDER:simulator}
+    allowed-return-origins: ${WINUP_ALLOWED_RETURN_ORIGINS:http://localhost:4200,http://127.0.0.1:8080}
+    web-return-url: ${WINUP_WEB_RETURN_URL:http://localhost:4200/cartera}
+    withdrawals:
+      approval-threshold: ${WINUP_WITHDRAWALS_APPROVAL_THRESHOLD:200000.00}
+      daily-limit: ${WINUP_WITHDRAWALS_DAILY_LIMIT:0}
+    mercadopago:
+      access-token: ${WINUP_MERCADOPAGO_ACCESS_TOKEN:}
+      public-key: ${WINUP_MERCADOPAGO_PUBLIC_KEY:}
+      sandbox: ${WINUP_MERCADOPAGO_SANDBOX:true}
+      notification-url: ${WINUP_MERCADOPAGO_NOTIFICATION_URL:http://localhost:8080/api/v1/webhooks/mercadopago}
+      webhook-secret: ${WINUP_MERCADOPAGO_WEBHOOK_SECRET:}
+      back-url: ${WINUP_MERCADOPAGO_BACK_URL:http://localhost:4200/cartera}
+  match:
+    window-ms: ${WINUP_MATCH_WINDOW_MS:60000}
+  user:
+    id: u555
+
+management:
+  health:
+    mail:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    org.springframework.amqp: WARN
