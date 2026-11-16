@@ -1,0 +1,76 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(8px, 0.6vw, 12px);
+  line-height: 1;
+}
+
+.mark {
+  width: auto;
+  height: clamp(30px, 2vw, 42px);
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.mark-light {
+  display: none;
+}
+
+:host-context([data-theme="light"]) .brand:not(.on-dark) .mark-dark {
+  display: none;
+}
+
+:host-context([data-theme="light"]) .brand:not(.on-dark) .mark-light {
+  display: block;
+}
+
+.lockup {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 0.3vw, 6px);
+}
+
+.word {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+}
+
+.up {
+  color: var(--logo-up);
+}
+
+.tagline {
+  color: var(--muted);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  white-space: nowrap;
+}
+
+.sm .mark {
+  height: clamp(22px, 1.5vw, 30px);
+}
+
+.sm .word {
+  font-size: var(--text-xl);
+}
+
+.sm .tagline {
+  display: none;
+}
+
+.lg .mark {
+  height: clamp(44px, 3vw, 64px);
+}
+
+.lg .word {
+  font-size: var(--text-3xl);
+}
+
+.lg .tagline {
+  font-size: var(--text-2xs);
+}

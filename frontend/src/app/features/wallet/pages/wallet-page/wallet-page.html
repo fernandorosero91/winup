@@ -1,0 +1,109 @@
+<section class="page">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Finanzas</span>
+      <h1>Cartera</h1>
+      <p>Consulta tu saldo y todos tus movimientos.</p>
+    </div>
+  </header>
+
+  <div class="wallet-grid">
+    <article class="balance">
+      <span class="balance-glow" aria-hidden="true"></span>
+
+      <header class="balance-head">
+        <div class="balance-copy">
+          <span class="balance-label">Saldo disponible</span>
+          <span class="balance-hint">Listo para apostar en vivo</span>
+        </div>
+        <span class="balance-currency mono">COP</span>
+      </header>
+
+      <strong class="balance-amount mono">{{ money(data.wallet().balance) }}</strong>
+
+      @if (data.wallet().heldBalance > 0) {
+        <span class="balance-held">
+          Retenido en retiros: <strong class="mono">{{ money(data.wallet().heldBalance) }}</strong>
+        </span>
+      }
+
+      <div class="balance-foot">
+        <div class="balance-actions">
+          <button type="button" class="primary" (click)="openDeposit()">
+            <ng-icon name="lucideCreditCard" size="16" />
+            Depositar
+          </button>
+          <button type="button" class="secondary" (click)="openWithdraw()">
+            <ng-icon name="lucideBanknote" size="16" />
+            Retirar
+          </button>
+        </div>
+        <span class="balance-mark" aria-hidden="true">WINUP</span>
+      </div>
+    </article>
+
+    <article class="stats">
+      <div class="stat">
+        <span class="stat-icon is-income" aria-hidden="true">
+          <ng-icon name="lucideTrendingUp" size="16" />
+        </span>
+        <span class="stat-label">Ingresos</span>
+        <strong class="mono success">{{ money(income()) }}</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-icon is-expense" aria-hidden="true">
+          <ng-icon name="lucideArrowUpRight" size="16" />
+        </span>
+        <span class="stat-label">Gastos</span>
+        <strong class="mono">{{ money(expenses()) }}</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-icon" aria-hidden="true">
+          <ng-icon name="lucideTicket" size="16" />
+        </span>
+        <span class="stat-label">Movimientos</span>
+        <strong class="mono">{{ data.movements().length }}</strong>
+      </div>
+    </article>
+  </div>
+
+  @if (message()) {
+    <p class="deposit-message" role="status">{{ message() }}</p>
+  }
+
+  @if (panel() === 'deposit') {
+    <app-deposit-panel (closed)="closePanel()" (finished)="onFinished($event)" />
+  }
+
+  @if (panel() === 'withdraw') {
+    <app-withdraw-panel (closed)="closePanel()" (finished)="onFinished($event)" />
+  }
+
+  <section class="movements">
+    <header class="section-head">
+      <h2>Movimientos</h2>
+      <span>Últimos 30 días</span>
+    </header>
+
+    <div class="movement-list">
+      @for (movement of data.movements(); track movement.id) {
+        <article class="movement">
+          <span
+            class="movement-icon"
+            [class.is-income]="movement.amount > 0"
+            [class.is-expense]="movement.amount < 0"
+          >
+            <ng-icon [name]="iconFor(movement)" size="16" />
+          </span>
+          <div class="movement-main">
+            <strong>{{ movement.concept }}</strong>
+            <span>{{ movement.date }}</span>
+          </div>
+          <span class="amount mono" [class.is-income]="movement.amount > 0">
+            {{ signedMoney(movement.amount) }}
+          </span>
+        </article>
+      }
+    </div>
+  </section>
+</section>

@@ -1,0 +1,10 @@
+<span class="brand" [class]="'brand ' + size()" [class.on-dark]="variant() === 'dark'">
+  <img class="mark mark-dark" src="/brand/mark-dark.png" alt="" aria-hidden="true" />
+  <img class="mark mark-light" src="/brand/mark-light.png" alt="" aria-hidden="true" />
+  <span class="lockup">
+    <span class="word"><span class="win">WIN</span><span class="up">UP</span></span>
+    @if (tagline()) {
+      <span class="tagline">CADA SEGUNDO IMPORTA</span>
+    }
+  </span>
+</span>
