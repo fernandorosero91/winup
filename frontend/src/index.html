@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <title>WINUP — Cada segundo importa</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101B2B">
+  <link rel="icon" type="image/x-icon" href="favicon-winup.ico?v=20261112c">
+  <link rel="icon" type="image/png" sizes="512x512" href="favicon-winup.png?v=20261112c">
+  <link rel="apple-touch-icon" href="favicon-winup.png?v=20261112c">
+  <link rel="shortcut icon" href="favicon-winup.ico?v=20261112c">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      var query = new URLSearchParams(location.search).get('theme');
+      var stored = query === 'light' || query === 'dark' ? query : (localStorage.getItem('winup-theme') || 'system');
+      var dark = stored === 'dark' || (stored === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
