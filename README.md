@@ -278,13 +278,20 @@ El backend no usa `@SpringBootTest` en la suite unitaria.
 
 ## Despliegue
 
-El repositorio incluye lo necesario para un VPS con Docker y HTTPS:
+Con Docker y Caddy en un VPS:
 
 ```bash
 git clone <repo> winup && cd winup
 cp .env.example .env
 docker compose --profile proxy up -d --build
 ```
+
+Con Dokploy, usar el archivo `docker-compose.dokploy.yml`, que no incluye Caddy ni publica puertos al host. En Dokploy:
+
+1. Crear un proyecto tipo Compose y apuntar la ruta a `docker-compose.dokploy.yml`.
+2. Definir `WINUP_DB_PASSWORD`, `WINUP_JWT_SECRET` y las variables de Mercado Pago.
+3. Añadir el dominio `winup.site` al servicio `frontend`, puerto 80, con Let's Encrypt.
+4. El servicio ya está conectado a `dokploy-network` para que Traefik lo alcance.
 
 - `frontend/nginx.conf` sirve la aplicación y proxya `/api` y `/ws`.
 - `deploy/Caddyfile` termina TLS para `winup.site` y redirige `www`.
