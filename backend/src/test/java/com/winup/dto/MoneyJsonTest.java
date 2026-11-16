@@ -44,7 +44,8 @@ class MoneyJsonTest {
                 new BigDecimal("2.10"),
                 new BigDecimal("105000.00"),
                 "PENDIENTE",
-                "10:00"
+                "10:00",
+                new BetOutcomeDto("LOCAL", "Liverpool", 2, 1, true)
         );
 
         String json = mapper.writeValueAsString(bet);
@@ -52,6 +53,7 @@ class MoneyJsonTest {
         assertThat(json).contains("\"stake\":\"50000.00\"");
         assertThat(json).contains("\"potential\":\"105000.00\"");
         assertThat(json).contains("\"odds\":2.10");
+        assertThat(json).contains("\"winnerName\":\"Liverpool\"");
     }
 
     @Test

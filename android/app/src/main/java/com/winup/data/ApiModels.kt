@@ -67,6 +67,15 @@ data class MatchPageDto(
 )
 
 @Serializable
+data class BetOutcomeDto(
+    val winner: String? = null,
+    val winnerName: String? = null,
+    val homeScore: Int? = null,
+    val awayScore: Int? = null,
+    val finished: Boolean = false,
+)
+
+@Serializable
 data class BetDto(
     val id: String,
     val match: String,
@@ -77,6 +86,7 @@ data class BetDto(
     val potential: String,
     val status: String,
     val placedAt: String,
+    val outcome: BetOutcomeDto? = null,
 )
 
 @Serializable
@@ -192,6 +202,15 @@ fun BetDto.toUi(): Bet = Bet(
     odds = odds,
     potential = potential.toBigDecimal(),
     status = status,
+    outcome = outcome?.toUi(),
+)
+
+fun BetOutcomeDto.toUi(): BetOutcome = BetOutcome(
+    winner = winner,
+    winnerName = winnerName,
+    homeScore = homeScore,
+    awayScore = awayScore,
+    finished = finished,
 )
 
 fun MovementDto.toUi(): Movement = Movement(

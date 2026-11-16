@@ -107,6 +107,10 @@ private fun BetCard(bet: Bet) {
                 fontWeight = FontWeight.Bold,
             )
 
+            bet.outcome?.takeIf { it.finished }?.let { outcome ->
+                BetOutcomeRow(outcome)
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

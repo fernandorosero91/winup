@@ -15,6 +15,7 @@ public record BetDto(
         BigDecimal odds,
         @JsonSerialize(using = ToStringSerializer.class) BigDecimal potential,
         String status,
-        String placedAt
+        String placedAt,
+        BetOutcomeDto outcome
 ) {
 }

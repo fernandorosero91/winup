@@ -3,6 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import type { AppNotification, Bet, Match, Movement } from '../data/winup-data';
 
+export interface BetOutcomeResponse {
+  winner: string | null;
+  winnerName: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  finished: boolean;
+}
+
 export interface BetResponse {
   id: string;
   match: string;
@@ -13,6 +21,7 @@ export interface BetResponse {
   potential: string;
   status: string;
   placedAt: string;
+  outcome?: BetOutcomeResponse | null;
 }
 
 export interface MovementResponse {
@@ -86,6 +95,15 @@ export function toBet(dto: BetResponse): Bet {
     potential: Number(dto.potential),
     status: dto.status as Bet['status'],
     placedAt: dto.placedAt,
+    outcome: dto.outcome
+      ? {
+          winner: dto.outcome.winner ?? null,
+          winnerName: dto.outcome.winnerName ?? null,
+          homeScore: dto.outcome.homeScore ?? null,
+          awayScore: dto.outcome.awayScore ?? null,
+          finished: dto.outcome.finished ?? false,
+        }
+      : null,
   };
 }
 

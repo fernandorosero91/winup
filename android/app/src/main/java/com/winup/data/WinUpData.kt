@@ -30,6 +30,14 @@ data class Match(
     val isSimulated: Boolean = true,
 )
 
+data class BetOutcome(
+    val winner: String?,
+    val winnerName: String?,
+    val homeScore: Int?,
+    val awayScore: Int?,
+    val finished: Boolean,
+)
+
 data class Bet(
     val id: String,
     val match: String,
@@ -39,6 +47,7 @@ data class Bet(
     val odds: Double,
     val potential: BigDecimal,
     val status: String,
+    val outcome: BetOutcome?,
 )
 
 data class NotificationItem(

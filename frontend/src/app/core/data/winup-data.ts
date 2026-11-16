@@ -32,6 +32,14 @@ export interface Match {
   isSimulated?: boolean;
 }
 
+export interface BetOutcome {
+  winner: string | null;
+  winnerName: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  finished: boolean;
+}
+
 export interface Bet {
   id: string;
   matchId?: string;
@@ -43,6 +51,7 @@ export interface Bet {
   potential: number;
   status: BetStatus;
   placedAt: string;
+  outcome: BetOutcome | null;
 }
 
 export interface Movement {
@@ -328,6 +337,7 @@ export class WinupData {
       potential: 82500,
       status: 'PENDIENTE',
       placedAt: 'Hoy, 20:12',
+      outcome: null,
     },
     {
       id: 'b-002',
@@ -340,6 +350,13 @@ export class WinupData {
       potential: 47500,
       status: 'GANADA',
       placedAt: 'Ayer, 21:05',
+      outcome: {
+        winner: 'LOCAL',
+        winnerName: 'Real Madrid',
+        homeScore: 2,
+        awayScore: 1,
+        finished: true,
+      },
     },
     {
       id: 'b-003',
@@ -352,6 +369,13 @@ export class WinupData {
       potential: 64000,
       status: 'PERDIDA',
       placedAt: 'Ayer, 19:40',
+      outcome: {
+        winner: 'LOCAL',
+        winnerName: 'Arsenal',
+        homeScore: 2,
+        awayScore: 0,
+        finished: true,
+      },
     },
   ]);
 

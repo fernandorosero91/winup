@@ -54,6 +54,18 @@
           <span class="date">{{ bet.placedAt }}</span>
         </div>
 
+        @if (bet.outcome?.finished) {
+          <div class="bet-result">
+            <div class="bet-result-copy">
+              <span>Ganador</span>
+              <strong>{{ bet.outcome?.winnerName ?? 'No disponible' }}</strong>
+            </div>
+            <span class="bet-score mono">
+              {{ bet.outcome?.homeScore ?? 0 }} - {{ bet.outcome?.awayScore ?? 0 }}
+            </span>
+          </div>
+        }
+
         <footer class="bet-values">
           <div>
             <span>Importe</span>

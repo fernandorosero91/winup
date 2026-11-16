@@ -178,7 +178,7 @@ WebSocket:
 | GET | `/api/v1/admin/**` | Panel de administración |
 | GET | `/api/v1/health` | Estado del servicio |
 
-Los `POST` críticos exigen `Idempotency-Key`.
+Los `POST` críticos exigen `Idempotency-Key`. Cada apuesta liquidada incluye un objeto `outcome` con `winner`, `winnerName`, `homeScore`, `awayScore` y `finished`.
 
 ## Seguridad
 
