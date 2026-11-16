@@ -46,6 +46,7 @@ spring:
     listener:
       simple:
         acknowledge-mode: auto
+        prefetch: 10
         default-requeue-rejected: false
         retry:
           enabled: true
@@ -86,6 +87,33 @@ winup:
     count: ${WINUP_RANDOM_COUNT:300}
   replay:
     enabled: ${WINUP_REPLAY_ENABLED:true}
+  sports:
+    provider: ${WINUP_SPORTS_PROVIDER:random}
+    replay-path: ${WINUP_SPORTS_REPLAY_PATH:classpath:sports/replay-fixtures.json}
+    quota:
+      store: ${WINUP_SPORTS_QUOTA_STORE:jdbc}
+      daily-limit: ${WINUP_SPORTS_QUOTA_DAILY_LIMIT:100}
+    footballdata:
+      base-url: ${WINUP_FOOTBALLDATA_BASE_URL:https://footballdata.io/api/v1}
+      api-key: ${WINUP_FOOTBALLDATA_API_KEY:}
+      league-id: ${WINUP_FOOTBALLDATA_LEAGUE_ID:10}
+      season-id: ${WINUP_FOOTBALLDATA_SEASON_ID:0}
+      language: ${WINUP_FOOTBALLDATA_LANGUAGE:es}
+      timeout-ms: ${WINUP_FOOTBALLDATA_TIMEOUT_MS:8000}
+    api-football:
+      base-url: ${WINUP_API_FOOTBALL_BASE_URL:https://v3.football.api-sports.io}
+      api-key: ${WINUP_API_FOOTBALL_KEY:}
+      league-id: ${WINUP_API_FOOTBALL_LEAGUE_ID:140}
+      season: ${WINUP_API_FOOTBALL_SEASON:2026}
+      timeout-ms: ${WINUP_API_FOOTBALL_TIMEOUT_MS:8000}
+    ingestion:
+      enabled: ${WINUP_SPORTS_INGESTION_ENABLED:false}
+      live-enabled: ${WINUP_SPORTS_INGESTION_LIVE_ENABLED:false}
+      sport: ${WINUP_SPORTS_INGESTION_SPORT:Fútbol}
+      interval-ms: ${WINUP_SPORTS_INGESTION_INTERVAL_MS:600000}
+      live-interval-ms: ${WINUP_SPORTS_INGESTION_LIVE_INTERVAL_MS:600000}
+      lookback-hours: ${WINUP_SPORTS_INGESTION_LOOKBACK_HOURS:24}
+      lookahead-hours: ${WINUP_SPORTS_INGESTION_LOOKAHEAD_HOURS:48}
   payments:
     provider: ${WINUP_PAYMENTS_PROVIDER:simulator}
     payout-provider: ${WINUP_PAYOUT_PROVIDER:simulator}

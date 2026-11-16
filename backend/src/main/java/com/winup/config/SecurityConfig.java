@@ -78,6 +78,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
                                 "/api/v1/health",
+                                "/api/v1/health/providers",
                                 "/api/v1/webhooks/mercadopago",
                                 "/api/v1/payments/return",
                                 "/api/v1/payments/return/**",
