@@ -1,4 +1,4 @@
-package com.winup.model.match;
+package com.winup.model.vo;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

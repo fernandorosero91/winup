@@ -1,4 +1,4 @@
-package com.winup.model.match;
+package com.winup.model.vo;
 
 import java.util.Objects;
 import java.util.UUID;

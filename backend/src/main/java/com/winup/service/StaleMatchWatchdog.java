@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.repository.MatchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class StaleMatchWatchdog {
     void closeStaleMatches() {
         Instant threshold = clock.instant().minusMillis(graceMs);
         List<MatchEntity> stale = matchRepository
-                .findByStatusAndMinuteGreaterThanAndCreatedAtBefore("OPEN", 0, threshold);
+                .findByStatusAndMinuteGreaterThanAndCreatedAtBefore(MatchStatus.OPEN.code(), 0, threshold);
 
         for (MatchEntity match : stale) {
             if (!match.isSimulated()) {

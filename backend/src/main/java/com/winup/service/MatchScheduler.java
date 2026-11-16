@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.repository.MatchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class MatchScheduler {
     void startDue() {
         Instant now = clock.instant();
         List<MatchEntity> due = matchRepository
-                .findByStatusAndMinuteAndStartsAtBefore("OPEN", 0, now);
+                .findByStatusAndMinuteAndStartsAtBefore(MatchStatus.OPEN.code(), 0, now);
 
         for (MatchEntity match : due) {
             if (!match.isSimulated()) {

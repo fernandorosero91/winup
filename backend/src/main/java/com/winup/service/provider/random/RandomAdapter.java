@@ -1,6 +1,7 @@
 package com.winup.service.provider.random;
 
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.model.SportCatalog;
 import com.winup.repository.MatchRepository;
 import com.winup.service.MatchFactory;
@@ -68,7 +69,7 @@ public class RandomAdapter {
     private void applyState(MatchEntity match, int index, Random random) {
         int slot = index % 3;
         if (slot == 0) {
-            match.setStatus("OPEN");
+            match.setStatus(MatchStatus.OPEN.code());
             match.setMinute(1 + random.nextInt(85));
             match.setHomeScore(random.nextInt(0, 4));
             match.setAwayScore(random.nextInt(0, 4));
@@ -76,14 +77,14 @@ public class RandomAdapter {
             return;
         }
         if (slot == 1) {
-            match.setStatus("OPEN");
+            match.setStatus(MatchStatus.OPEN.code());
             match.setMinute(0);
             match.setHomeScore(0);
             match.setAwayScore(0);
             match.setStartsAt(Instant.now().plusSeconds(random.nextInt(3600, 172800)));
             return;
         }
-        match.setStatus("CLOSED");
+        match.setStatus(MatchStatus.CLOSED.code());
         match.setMinute(90);
         int homeScore = random.nextInt(0, 4);
         int awayScore = random.nextInt(0, 4);

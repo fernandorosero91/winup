@@ -4,13 +4,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.winup.entity.ProcessedEventEntity;
+import com.winup.model.MatchStatus;
 import com.winup.model.match.Bet;
-import com.winup.model.match.BetId;
+import com.winup.model.vo.BetId;
 import com.winup.exception.BettingClosedException;
-import com.winup.model.match.Dinero;
-import com.winup.model.match.MatchId;
-import com.winup.model.match.MatchResult;
-import com.winup.model.match.UserId;
+import com.winup.model.vo.Dinero;
+import com.winup.model.vo.MatchId;
+import com.winup.model.vo.MatchResult;
+import com.winup.model.vo.UserId;
 import com.winup.model.vo.BetSelection;
 import com.winup.service.engine.BetPlacedEvent;
 import com.winup.service.engine.MatchCreatedEvent;
@@ -79,7 +80,7 @@ public class KafkaEventConsumer {
                         payload.path("away").asText()
                 ));
                 eventPublisher.notifyDashboard(
-                        "OPEN",
+                        MatchStatus.OPEN,
                         matchId.value().toString(),
                         payload.path("home").asText(),
                         payload.path("away").asText(),

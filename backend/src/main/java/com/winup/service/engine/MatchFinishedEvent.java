@@ -1,7 +1,7 @@
 package com.winup.service.engine;
 
-import com.winup.model.match.MatchId;
-import com.winup.model.match.MatchResult;
+import com.winup.model.vo.MatchId;
+import com.winup.model.vo.MatchResult;
 
 import java.util.Objects;
 

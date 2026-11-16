@@ -2,6 +2,7 @@ package com.winup.dto;
 
 import com.winup.entity.MatchEntity;
 import com.winup.entity.MovementEntity;
+import com.winup.model.MatchStatus;
 import com.winup.model.SportCatalog;
 
 import java.time.ZoneId;
@@ -15,9 +16,7 @@ public final class DtoMapper {
     }
 
     public static MatchDto toMatch(MatchEntity match) {
-        String status = match.getStatus().equals("CLOSED")
-                ? "FINALIZADO"
-                : match.getMinute() > 0 ? "EN VIVO" : "PRÓXIMO";
+        String status = MatchStatus.from(match.getStatus()).label(match.getMinute());
 
         return new MatchDto(
                 match.getId(),
