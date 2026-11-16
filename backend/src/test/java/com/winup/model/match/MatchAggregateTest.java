@@ -1,13 +1,11 @@
 package com.winup.model.match;
+import com.winup.exception.BettingClosedException;
 import com.winup.model.vo.BetId;
+import com.winup.model.vo.BetSelection;
 import com.winup.model.vo.Dinero;
 import com.winup.model.vo.MatchId;
 import com.winup.model.vo.MatchResult;
 import com.winup.model.vo.UserId;
-
-
-import com.winup.exception.BettingClosedException;
-import com.winup.model.vo.BetSelection;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -43,6 +41,51 @@ class MatchAggregateTest {
 
         assertThatThrownBy(() -> match.registrarApuesta(bet(BetSelection.LOCAL, "100.00", "2.00")))
                 .isInstanceOf(BettingClosedException.class);
+    }
+
+    @Test
+    void should_reject_blank_team_names() {
+        assertThatThrownBy(() -> new MatchAggregate(matchId, " ", "Equipo B"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("local");
+    }
+
+    @Test
+    void should_reject_a_duplicate_bet() {
+        MatchAggregate match = new MatchAggregate(matchId, "Equipo A", "Equipo B");
+        match.abrirApuestas();
+        Bet bet = bet(BetSelection.LOCAL, "100.00", "2.00");
+
+        match.registrarApuesta(bet);
+
+        assertThatThrownBy(() -> match.registrarApuesta(bet))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("registrada");
+        assertThat(match.bets()).hasSize(1);
+    }
+
+    @Test
+    void should_not_overwrite_the_result_after_settlement() {
+        MatchAggregate match = new MatchAggregate(matchId, "Equipo A", "Equipo B");
+        match.abrirApuestas();
+        match.registrarApuesta(bet(BetSelection.LOCAL, "100.00", "2.00"));
+        match.finalizarPartido(new MatchResult("LOCAL", 2, 1));
+        match.liquidarGanancias(new DecimalPayoutStrategy());
+
+        assertThatThrownBy(() -> match.finalizarPartido(new MatchResult("VISITANTE", 0, 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(match.result().winner()).isEqualTo("LOCAL");
+    }
+
+    @Test
+    void should_not_liquidate_twice() {
+        MatchAggregate match = new MatchAggregate(matchId, "Equipo A", "Equipo B");
+        match.abrirApuestas();
+        match.finalizarPartido(new MatchResult("LOCAL", 1, 0));
+        match.liquidarGanancias(new DecimalPayoutStrategy());
+
+        assertThatThrownBy(() -> match.liquidarGanancias(new DecimalPayoutStrategy()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
