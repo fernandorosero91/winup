@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+val winupApiBaseUrl = providers.gradleProperty("winup.apiBaseUrl")
+    .orElse("https://winup.site/")
+    .map { url -> if (url.endsWith("/")) url else "$url/" }
+
 android {
     namespace = "com.winup"
     compileSdk = 35
@@ -15,7 +19,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
-        buildConfigField("String", "API_BASE_URL", "\"http://127.0.0.1:8080/\"")
+        buildConfigField("String", "API_BASE_URL", "\"${winupApiBaseUrl.get()}\"")
     }
 
     buildTypes {

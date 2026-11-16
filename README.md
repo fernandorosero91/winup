@@ -190,6 +190,17 @@ Los `POST` críticos exigen `Idempotency-Key`.
 - Sin secretos en el repositorio: todo por variables de entorno.
 - Validación en el borde (DTO) y en el dominio.
 
+### Autenticación de la API
+
+La API no usa API key: usa JWT por usuario.
+
+- `POST /api/v1/auth/login` devuelve un token HS256 con `sub`, `email`, `name` y `role`.
+- El cliente lo envía como `Authorization: Bearer <token>`.
+- Sin token, `/api/v1/**` responde 401; con rol insuficiente, 403.
+- El token caduca a las 2 horas y no se guarda en el servidor.
+
+Una API key estática no protege una app móvil: viaja dentro del APK y se puede extraer. Las `public key` de pasarelas como Mercado Pago sirven para tokenizar en el cliente, no para autenticar el backend. Para control de abuso por aplicación las opciones reales son rate limit por IP y usuario, Play Integrity o mTLS con certificado de cliente.
+
 ## Web
 
 - Angular 22 standalone, sin `NgModule`.
@@ -209,7 +220,8 @@ Los `POST` críticos exigen `Idempotency-Key`.
 - WebSocket para eventos en vivo y notificaciones.
 - Iconografía con `material-icons-extended`.
 - `minSdk 26`, `compileSdk 35`.
-- URL por `BuildConfig.API_BASE_URL`; en local `http://127.0.0.1:8080/` con `adb reverse`.
+- `BuildConfig.API_BASE_URL` apunta por defecto a `https://winup.site/`.
+- En local: `./gradlew :app:assembleDebug -Pwinup.apiBaseUrl=http://127.0.0.1:8080/` con `adb reverse tcp:8080 tcp:8080`.
 
 ## Datos
 
@@ -247,7 +259,7 @@ Android:
 
 ```bash
 cd android
-./gradlew :app:assembleDebug
+./gradlew :app:assembleDebug -Pwinup.apiBaseUrl=http://127.0.0.1:8080/
 adb reverse tcp:8080 tcp:8080
 ./gradlew :app:installDebug
 ```
