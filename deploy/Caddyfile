@@ -1,0 +1,11 @@
+www.winup.site {
+	redir https://winup.site{uri} permanent
+}
+
+winup.site {
+	encode zstd gzip
+	reverse_proxy frontend:80
+	header {
+		-Server
+	}
+}

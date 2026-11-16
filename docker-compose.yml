@@ -1,0 +1,202 @@
+name: winup
+
+x-backend-build: &backend-build
+  context: ./backend
+  dockerfile: Dockerfile
+
+x-backend-env: &backend-env
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/winup
+  SPRING_DATASOURCE_USERNAME: winup
+  SPRING_DATASOURCE_PASSWORD: winup
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+  SPRING_RABBITMQ_HOST: rabbitmq
+  WINUP_JWT_SECRET: ${WINUP_JWT_SECRET}
+  WINUP_ALLOWED_ORIGINS: ${WINUP_ALLOWED_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}
+  WINUP_REPLAY_ENABLED: "true"
+  WINUP_SMTP_HOST: ${WINUP_SMTP_HOST:-smtp.gmail.com}
+  WINUP_SMTP_PORT: ${WINUP_SMTP_PORT:-587}
+  WINUP_SMTP_USERNAME: ${WINUP_SMTP_USERNAME:-}
+  WINUP_SMTP_PASSWORD: ${WINUP_SMTP_PASSWORD:-}
+  WINUP_MAIL_FROM: ${WINUP_MAIL_FROM:-WINUP <no-reply@winup.app>}
+  WINUP_MAIL_ENABLED: ${WINUP_MAIL_ENABLED:-true}
+  WINUP_PUBLIC_URL: ${WINUP_PUBLIC_URL:-http://localhost:4200}
+  WINUP_PAYMENTS_PROVIDER: ${WINUP_PAYMENTS_PROVIDER:-simulator}
+  WINUP_PAYOUT_PROVIDER: ${WINUP_PAYOUT_PROVIDER:-simulator}
+  WINUP_WITHDRAWALS_APPROVAL_THRESHOLD: ${WINUP_WITHDRAWALS_APPROVAL_THRESHOLD:-200000.00}
+  WINUP_WITHDRAWALS_DAILY_LIMIT: ${WINUP_WITHDRAWALS_DAILY_LIMIT:-0}
+  WINUP_MERCADOPAGO_ACCESS_TOKEN: ${WINUP_MERCADOPAGO_ACCESS_TOKEN:-}
+  WINUP_MERCADOPAGO_PUBLIC_KEY: ${WINUP_MERCADOPAGO_PUBLIC_KEY:-}
+  WINUP_MERCADOPAGO_SANDBOX: ${WINUP_MERCADOPAGO_SANDBOX:-true}
+  WINUP_MERCADOPAGO_NOTIFICATION_URL: ${WINUP_MERCADOPAGO_NOTIFICATION_URL:-http://localhost:8080/api/v1/webhooks/mercadopago}
+  WINUP_MERCADOPAGO_WEBHOOK_SECRET: ${WINUP_MERCADOPAGO_WEBHOOK_SECRET:-}
+  WINUP_MERCADOPAGO_BACK_URL: ${WINUP_MERCADOPAGO_BACK_URL:-http://localhost:4200/cartera}
+  WINUP_ALLOWED_RETURN_ORIGINS: ${WINUP_ALLOWED_RETURN_ORIGINS:-http://localhost:4200,http://127.0.0.1:8080}
+  WINUP_WEB_RETURN_URL: ${WINUP_WEB_RETURN_URL:-http://localhost:4200/cartera}
+  WINUP_PUSH_PROVIDER: ${WINUP_PUSH_PROVIDER:-realtime}
+  WINUP_FCM_PROJECT_ID: ${WINUP_FCM_PROJECT_ID:-}
+  WINUP_FCM_CLIENT_EMAIL: ${WINUP_FCM_CLIENT_EMAIL:-}
+  WINUP_FCM_PRIVATE_KEY: ${WINUP_FCM_PRIVATE_KEY:-}
+  JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+
+x-backend-deps: &backend-deps
+  kafka:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+  postgres:
+    condition: service_healthy
+
+services:
+  kafka:
+    image: apache/kafka:3.9.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:29093,PLAINTEXT_HOST://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    ports:
+      - "127.0.0.1:9092:9092"
+    networks:
+      - winup-core
+    volumes:
+      - winup-kafka-data:/var/lib/kafka/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  rabbitmq:
+    build:
+      context: ./deploy/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    networks:
+      - winup-core
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: winup
+      POSTGRES_USER: winup
+      POSTGRES_PASSWORD: winup
+    ports:
+      - "127.0.0.1:5433:5432"
+    networks:
+      - winup-core
+    volumes:
+      - winup-pgdata:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U winup -d winup"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      <<: *backend-build
+    depends_on: *backend-deps
+    environment:
+      <<: *backend-env
+      WINUP_GENERATOR_ENABLED: "true"
+      WINUP_GENERATOR_LIVE_PER_SPORT: "5"
+      WINUP_RANDOM_COUNT: "300"
+    restart: on-failure
+    expose:
+      - "8080"
+    networks:
+      - winup-core
+      - winup-edge
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  caddy:
+    image: caddy:2-alpine
+    profiles:
+      - proxy
+    depends_on:
+      - frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - winup-edge
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: on-failure
+    ports:
+      - "${WINUP_FRONTEND_BIND:-4200}:80"
+      - "${WINUP_API_BIND:-8080}:80"
+    networks:
+      - winup-edge
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+networks:
+  winup-core:
+    driver: bridge
+    internal: true
+  winup-edge:
+    driver: bridge
+
+volumes:
+  winup-pgdata:
+  winup-kafka-data:
+  caddy-data:
+  caddy-config:
