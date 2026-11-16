@@ -103,7 +103,19 @@ data class WalletDto(
     val balance: String,
     val heldBalance: String = "0.00",
     val currency: String = "COP",
-    val movements: List<MovementDto>,
+    val income: String = "0.00",
+    val expenses: String = "0.00",
+    val movementCount: Int = 0,
+)
+
+@Serializable
+data class MovementPageDto(
+    val items: List<MovementDto>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Int,
+    val totalPages: Int,
+    val hasNext: Boolean,
 )
 
 @Serializable
@@ -163,6 +175,12 @@ data class RealtimeEvent(
     val awayScore: Int = 0,
     val minute: Int = 0,
     val winner: String = "",
+)
+
+@Serializable
+data class DeviceTokenRequest(
+    val token: String,
+    val platform: String = "android",
 )
 
 @Serializable

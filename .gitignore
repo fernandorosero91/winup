@@ -24,3 +24,6 @@ android/local.properties
 .idea/
 .vscode/
 hs_err_pid*
+
+# Firebase Android config (contains project API key)
+android/app/google-services.json

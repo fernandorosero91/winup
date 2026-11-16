@@ -68,8 +68,11 @@ public class FcmMobilePushAdapter implements MobilePushPort {
             log.warn("FCM no esta configurado; push para {} omitido", userId);
             return;
         }
-        List<String> tokens = deviceTokenRepository.findByUserId(userId).stream()
+        List<String> tokens = ("todos".equals(userId)
+                ? deviceTokenRepository.findAll().stream()
+                : deviceTokenRepository.findByUserId(userId).stream())
                 .map(device -> device.getToken())
+                .distinct()
                 .toList();
         if (tokens.isEmpty()) {
             log.info("Sin dispositivos FCM registrados para {}", userId);

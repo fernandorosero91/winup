@@ -38,8 +38,14 @@ interface WinUpApiService {
     @DELETE("api/v1/notifications")
     suspend fun clearNotifications()
 
-    @GET("api/v1/wallet")
+    @GET("api/v1/wallet/summary")
     suspend fun wallet(): WalletDto
+
+    @GET("api/v1/wallet/movements")
+    suspend fun movements(
+        @Query("page") page: Int,
+        @Query("size") size: Int,
+    ): MovementPageDto
 
     @POST("api/v1/bets")
     suspend fun placeBet(
@@ -58,6 +64,9 @@ interface WinUpApiService {
         @Header("Idempotency-Key") idempotencyKey: String,
         @Body request: WithdrawalRequest,
     ): WithdrawalDto
+
+    @POST("api/v1/devices")
+    suspend fun registerDevice(@Body request: DeviceTokenRequest)
 
     @GET("api/v1/payments/intents/{id}")
     suspend fun depositIntent(@Path("id") id: String): DepositDto
