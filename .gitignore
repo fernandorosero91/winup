@@ -1,0 +1,26 @@
+.env
+.env.*
+!.env.example
+*.log
+target/
+node_modules/
+dist/
+build/
+.gradle/
+.DS_Store
+*.iml
+*.apk
+*.aab
+*.jks
+*.keystore
+local.properties
+android/local.properties
+*.md
+!README.md
+/design/
+/docs/
+/specs/
+/Branding WINUP.png
+.idea/
+.vscode/
+hs_err_pid*
