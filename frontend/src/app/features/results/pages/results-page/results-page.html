@@ -1,0 +1,71 @@
+<section class="page">
+  <header class="page-head">
+    <span class="eyebrow">Histórico</span>
+    <h1>Resultados</h1>
+    <p>Los últimos partidos finalizados de todos los deportes.</p>
+  </header>
+
+  <div class="sport-chips" role="group" aria-label="Filtrar resultados por deporte">
+    @for (chip of sportChips; track chip.name) {
+      <button
+        type="button"
+        [class.is-active]="sportFilter() === chip.name"
+        [attr.aria-pressed]="sportFilter() === chip.name"
+        (click)="pickSport(chip.name)"
+      >
+        <ng-icon [name]="chip.icon" size="18" />
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  <div class="section-head">
+    <h2>Partidos finalizados</h2>
+    <span class="count mono">{{ total() }}</span>
+  </div>
+
+  @if (loading()) {
+    <p class="state">Cargando resultados...</p>
+  } @else if (matches().length === 0) {
+    <app-empty-state
+      icon="lucideChartNoAxesColumn"
+      title="Sin resultados para este deporte"
+      description="Cuando termine un partido, aparecerá aquí con su marcador final."
+    />
+  } @else {
+    <div class="results-grid">
+      @for (match of matches(); track match.id) {
+        <article class="result-card">
+          <header class="result-head">
+            <span class="league">{{ match.league }}</span>
+            <span class="sport">{{ match.sport }}</span>
+          </header>
+
+          <div class="teams">
+            <div class="team">
+              <span class="crest">{{ match.homeShort }}</span>
+              <span class="name">{{ match.home }}</span>
+              <span class="goals mono">{{ match.homeScore }}</span>
+            </div>
+            <div class="team">
+              <span class="crest">{{ match.awayShort }}</span>
+              <span class="name">{{ match.away }}</span>
+              <span class="goals mono">{{ match.awayScore }}</span>
+            </div>
+          </div>
+
+          <footer class="result-foot">
+            <span class="time mono">{{ match.startsAt }}</span>
+            <span class="final">Finalizado</span>
+          </footer>
+        </article>
+      }
+    </div>
+
+    @if (hasMore()) {
+      <button type="button" class="load-more" [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Cargando...' : 'Cargar más resultados' }}
+      </button>
+    }
+  }
+</section>

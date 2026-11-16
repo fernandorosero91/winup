@@ -1,0 +1,106 @@
+<section class="page">
+  <header class="page-head">
+    <span class="eyebrow">Actividad</span>
+    <h1>Notificaciones</h1>
+    <p>Resultados de tus apuestas y avisos de tu cuenta en un solo lugar.</p>
+  </header>
+
+  <div class="layout">
+    <div class="main-column">
+      <div class="toolbar">
+        <div class="tabs" role="tablist" aria-label="Filtrar notificaciones">
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === 'TODAS'"
+            [class.is-active]="filter() === 'TODAS'"
+            (click)="filter.set('TODAS')"
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            role="tab"
+            [attr.aria-selected]="filter() === 'NO LEIDAS'"
+            [class.is-active]="filter() === 'NO LEIDAS'"
+            (click)="filter.set('NO LEIDAS')"
+          >
+            No leídas
+            @if (data.unreadNotifications() > 0) {
+              <span class="badge mono">{{ data.unreadNotifications() }}</span>
+            }
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="mark-all"
+          [disabled]="data.unreadNotifications() === 0"
+          (click)="markAll()"
+        >
+          Marcar todas como leídas
+        </button>
+      </div>
+
+      <div class="notice-list">
+        @for (item of visible(); track item.id) {
+          <button type="button" class="notice" (click)="markOne(item.id)">
+            <span class="notice-icon" [class]="'notice-icon ' + item.kind.toLowerCase()">
+              <ng-icon [name]="item.icon" size="18" />
+            </span>
+            <span class="notice-body">
+              <span class="notice-title">
+                <strong>{{ item.title }}</strong>
+                <span class="notice-time">{{ item.date }}</span>
+              </span>
+              <span class="notice-detail">{{ item.detail }}</span>
+            </span>
+            @if (!data.isNotificationRead(item.id)) {
+              <span class="unread-dot" aria-label="Notificación no leída"></span>
+            }
+          </button>
+        } @empty {
+          <app-empty-state
+            icon="lucideBell"
+            title="Sin notificaciones"
+            description="Cuando tus apuestas se liquiden, verás el aviso aquí."
+          />
+        }
+      </div>
+    </div>
+
+    <aside class="summary">
+      <article class="panel">
+        <header class="panel-head">
+          <h2>Resumen</h2>
+          <span>Tu actividad</span>
+        </header>
+
+        <div class="stat">
+          <span>Sin leer</span>
+          <strong class="mono">{{ data.unreadNotifications() }}</strong>
+        </div>
+        <div class="stat">
+          <span>Apuestas ganadas</span>
+          <strong class="mono success">{{ won() }}</strong>
+        </div>
+        <div class="stat">
+          <span>Apuestas perdidas</span>
+          <strong class="mono">{{ lost() }}</strong>
+        </div>
+        <div class="stat">
+          <span>En juego</span>
+          <strong class="mono accent">{{ pending() }}</strong>
+        </div>
+      </article>
+
+      <article class="panel note">
+        <ng-icon name="lucideInfo" size="18" />
+        <p>
+          Las notificaciones se generan automáticamente cuando el motor de resultados
+          liquida tus apuestas.
+        </p>
+      </article>
+    </aside>
+  </div>
+</section>

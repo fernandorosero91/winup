@@ -1,0 +1,155 @@
+<section class="page">
+  <header class="page-head">
+    <span class="eyebrow">Cuenta</span>
+    <h1>Perfil</h1>
+    <p>Gestiona tu cuenta y la apariencia de WINUP.</p>
+  </header>
+
+  <div class="profile-grid">
+    <div class="column">
+      <article class="user-card">
+        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+        <div class="user-main">
+          <strong>{{ userName() }}</strong>
+          <span>{{ userEmail() }}</span>
+        </div>
+        <span class="user-badge">Cuenta verificada</span>
+      </article>
+
+      @if (auth.isAdmin()) {
+        <a class="panel admin-link" routerLink="/admin">
+          <span class="admin-icon" aria-hidden="true">
+            <ng-icon name="lucideShieldCheck" size="20" />
+          </span>
+          <span class="admin-copy">
+            <strong>Panel de administración</strong>
+            <span>Usuarios, pagos, ledger y partidos</span>
+          </span>
+          <ng-icon name="lucideChevronRight" size="18" />
+        </a>
+      }
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Preferencias</h2>
+          <span>Configuración de la cuenta</span>
+        </div>
+
+        <div class="settings">
+          <button type="button" class="setting">
+            <ng-icon name="lucideBell" size="18" />
+            <span>Notificaciones</span>
+            <span class="setting-value">Activadas</span>
+          </button>
+          <button type="button" class="setting">
+            <ng-icon name="lucideShieldCheck" size="18" />
+            <span>Seguridad</span>
+            <span class="setting-value">Protegida</span>
+          </button>
+          <button type="button" class="setting">
+            <ng-icon name="lucideInfo" size="18" />
+            <span>Ayuda y soporte</span>
+            <span class="setting-value">Centro de ayuda</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Sesión</h2>
+          <span>Dispositivo actual</span>
+        </div>
+
+        <div class="session-row">
+          <span class="session-icon" aria-hidden="true">
+            <ng-icon name="lucideShieldCheck" size="18" />
+          </span>
+          <div class="session-copy">
+            <strong>Sesión activa</strong>
+            <span>Navegador web · Este dispositivo</span>
+          </div>
+          <button type="button" class="logout" (click)="requestLogout()">
+            <ng-icon name="lucideLogOut" size="16" />
+            Cerrar sesión
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="column">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Apariencia</h2>
+          <span>Elige cómo quieres ver WINUP</span>
+        </div>
+
+        <div class="theme-options">
+          @for (option of themes; track option.mode) {
+            <button
+              type="button"
+              class="theme-option"
+              [class.is-active]="theme.mode() === option.mode"
+              (click)="setTheme(option.mode)"
+            >
+              <span class="theme-icon">
+                <ng-icon [name]="option.icon" size="18" />
+              </span>
+              <span class="theme-copy">
+                <strong>{{ option.label }}</strong>
+                <span>{{ option.detail }}</span>
+              </span>
+              <span class="theme-check" aria-hidden="true"></span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Resumen de la cuenta</h2>
+          <span>Datos de tu sesión</span>
+        </div>
+
+        <div class="account-grid">
+          <div>
+            <span>Saldo disponible</span>
+            <strong class="mono">{{ money(data.wallet().balance) }}</strong>
+          </div>
+          <div>
+            <span>Apuestas registradas</span>
+            <strong class="mono">{{ data.bets().length }}</strong>
+          </div>
+          <div>
+            <span>Moneda</span>
+            <strong>COP</strong>
+          </div>
+          <div>
+            <span>Estado</span>
+            <strong class="ok">Verificada</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="version">WINUP 1.0.0 · Cada segundo importa</p>
+
+  @if (confirmLogout()) {
+    <div class="dialog-backdrop" (click)="cancelLogout()">
+      <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="logout-title"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 id="logout-title">¿Cerrar sesión?</h2>
+        <p>Se cerrará tu sesión en este dispositivo. Podrás volver a entrar cuando quieras.</p>
+        <div class="dialog-actions">
+          <button type="button" class="ghost" (click)="cancelLogout()">Cancelar</button>
+          <button type="button" class="danger" (click)="logout()">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+  }
+</section>
