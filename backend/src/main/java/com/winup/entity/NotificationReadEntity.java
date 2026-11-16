@@ -4,12 +4,19 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notification_read")
+@Table(
+        name = "notification_read",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_notification_read_user_notification",
+                columnNames = { "user_id", "notification_id" }
+        )
+)
 public class NotificationReadEntity {
     @Id
     private UUID id;
