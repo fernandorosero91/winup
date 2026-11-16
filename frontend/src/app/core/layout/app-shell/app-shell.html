@@ -1,0 +1,102 @@
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand-link" routerLink="/inicio" aria-label="Ir al inicio">
+      <app-brand-logo size="md" [tagline]="true" />
+    </a>
+
+    <nav class="nav" aria-label="Navegación principal">
+      @for (item of nav; track item.label) {
+        <a
+          class="nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: item.path !== '/mis-apuestas' }"
+        >
+          <ng-icon [name]="item.icon" size="18" />
+          <span>{{ item.label }}</span>
+          @if (item.dot) {
+            <span class="live-dot" aria-hidden="true"></span>
+          }
+          @if (item.path === '/notificaciones' && data.unreadNotifications() > 0) {
+            <span class="nav-badge mono">{{ data.unreadNotifications() }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    @if (auth.isAdmin()) {
+      <a class="nav-item" routerLink="/admin" routerLinkActive="is-active">
+        <ng-icon name="lucideShieldCheck" size="18" />
+        <span>Administración</span>
+      </a>
+    }
+
+    <a class="deposit" routerLink="/cartera">
+      <ng-icon name="lucideWallet" size="18" />
+      <span>Depositar</span>
+    </a>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <label class="search">
+        <ng-icon name="lucideSearch" size="18" />
+        <input type="search" placeholder="Buscar partidos o equipos..." aria-label="Buscar partidos o equipos" />
+      </label>
+
+      <div class="topbar-actions">
+        <app-theme-toggle />
+        <a class="icon-button" routerLink="/notificaciones" aria-label="Notificaciones">
+          <ng-icon name="lucideBell" size="18" />
+          @if (data.unreadNotifications() > 0) {
+            <span class="notify-dot" aria-hidden="true"></span>
+          }
+        </a>
+        <a class="user" routerLink="/perfil">
+          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+          <span class="user-name">{{ userName() }}</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegación móvil">
+      @for (item of mobileNav; track item.label) {
+        <a class="bottom-item" [routerLink]="item.path" routerLinkActive="is-active">
+          <ng-icon [name]="item.icon" size="20" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  </div>
+
+  @if (toast(); as item) {
+    <aside
+      class="notification-toast"
+      [class.is-result]="item.kind === 'GANADA' || item.kind === 'PERDIDA'"
+      [class.is-win]="item.kind === 'GANADA'"
+      [class.is-loss]="item.kind === 'PERDIDA'"
+      [attr.role]="item.kind === 'PERDIDA' ? 'alert' : 'status'"
+      aria-live="polite"
+    >
+      <span class="toast-icon" aria-hidden="true">
+        <ng-icon [name]="item.icon" size="20" />
+      </span>
+      <div class="toast-copy">
+        <strong>{{ item.title }}</strong>
+        <span>{{ item.detail }}</span>
+      </div>
+      <button
+        type="button"
+        class="toast-close"
+        aria-label="Cerrar notificación"
+        (click)="dismissToast()"
+      >
+        <ng-icon name="lucideX" size="16" />
+      </button>
+    </aside>
+  }
+</div>
