@@ -15,12 +15,16 @@ import com.winup.dto.BetDto;
 import com.winup.dto.DtoMapper;
 import com.winup.mapper.BetMapper;
 import com.winup.dto.MovementDto;
+import com.winup.dto.MovementPageDto;
 import com.winup.dto.PlaceBetRequest;
 import com.winup.dto.WalletDto;
+import com.winup.dto.WalletSummaryDto;
 import com.winup.repository.BetRepository;
 import com.winup.repository.MatchRepository;
 import com.winup.repository.MovementRepository;
 import com.winup.repository.WalletRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,5 +147,39 @@ public class BetService {
                 .map(DtoMapper::toMovement)
                 .toList();
         return new WalletDto(wallet.getBalance(), wallet.getHeldBalance(), "COP", movements);
+    }
+
+    public WalletSummaryDto walletSummary(String userId) {
+        WalletEntity wallet = walletRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cartera no encontrada"));
+        BigDecimal expenses = movementRepository.totalExpenses(userId).abs();
+        return new WalletSummaryDto(
+                wallet.getBalance(),
+                wallet.getHeldBalance(),
+                "COP",
+                movementRepository.totalIncome(userId),
+                expenses,
+                movementRepository.countByUserId(userId)
+        );
+    }
+
+    public MovementPageDto movements(String userId, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Page<MovementEntity> result = movementRepository.findByUserIdOrderByCreatedAtDesc(
+                userId,
+                PageRequest.of(safePage, safeSize)
+        );
+        List<MovementDto> items = result.getContent().stream()
+                .map(DtoMapper::toMovement)
+                .toList();
+        return new MovementPageDto(
+                items,
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.hasNext()
+        );
     }
 }

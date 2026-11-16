@@ -16,6 +16,7 @@ export * from './winup-data.types';
 type FetchMode = 'initial' | 'page' | 'background';
 
 const PAGE_SIZE = 24;
+const MOVEMENTS_PAGE_SIZE = 20;
 
 @Injectable({ providedIn: 'root' })
 export class WinupData {
@@ -42,8 +43,19 @@ export class WinupData {
           balance: Number(wallet.balance),
           heldBalance: Number(wallet.heldBalance ?? 0),
           currency: wallet.currency,
+          income: Number(wallet.income),
+          expenses: Number(wallet.expenses),
+          movementCount: wallet.movementCount,
         });
-        this.movements.set(wallet.movements.map(toMovement));
+      },
+      error: () => undefined,
+    });
+    this.api.movements(0, MOVEMENTS_PAGE_SIZE).subscribe({
+      next: (page) => {
+        this.movements.set(page.items.map(toMovement));
+        this.movementPage.set(page.page);
+        this.movementTotal.set(page.totalElements);
+        this.movementHasNext.set(page.hasNext);
       },
       error: () => undefined,
     });
@@ -203,8 +215,29 @@ export class WinupData {
   readonly wallet = signal<Wallet>(DEMO_WALLET);
 
   readonly movements = signal<Movement[]>(DEMO_MOVEMENTS);
+  readonly movementPage = signal(0);
+  readonly movementTotal = signal(0);
+  readonly movementHasNext = signal(false);
+  readonly movementsLoading = signal(false);
 
   readonly serverNotifications = signal<AppNotification[]>([]);
+
+  loadMoreMovements(): void {
+    if (this.movementsLoading() || !this.movementHasNext()) {
+      return;
+    }
+    this.movementsLoading.set(true);
+    this.api.movements(this.movementPage() + 1, MOVEMENTS_PAGE_SIZE).subscribe({
+      next: (page) => {
+        this.movements.update((current) => [...current, ...page.items.map(toMovement)]);
+        this.movementPage.set(page.page);
+        this.movementTotal.set(page.totalElements);
+        this.movementHasNext.set(page.hasNext);
+      },
+      error: () => this.movementsLoading.set(false),
+      complete: () => this.movementsLoading.set(false),
+    });
+  }
 
   refreshNotifications(): void {
     this.api.notifications().subscribe({

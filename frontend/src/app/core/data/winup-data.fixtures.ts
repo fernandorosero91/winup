@@ -138,7 +138,7 @@ export const DEMO_BETS: Bet[] = [
     },
   ];
 
-export const DEMO_WALLET: Wallet = { balance: 1477500, heldBalance: 0, currency: 'COP' };
+export const DEMO_WALLET: Wallet = { balance: 1477500, heldBalance: 0, currency: 'COP', income: 0, expenses: 0, movementCount: 0 };
 
 export const DEMO_MOVEMENTS: Movement[] = [
     {

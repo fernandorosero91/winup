@@ -27,11 +27,15 @@ export class BetsPage {
     this.data.bets().reduce((total, bet) => total + bet.stake, 0),
   );
 
-  readonly totalWon = computed(() =>
-    this.data.bets()
-      .filter((bet) => bet.status === 'GANADA')
-      .reduce((total, bet) => total + bet.potential, 0),
+  readonly settled = computed(() =>
+    this.data.bets().filter((bet) => bet.status !== 'PENDIENTE'),
   );
+
+  readonly totalReturned = computed(() =>
+    this.settled().reduce((total, bet) => total + this.displayReturn(bet), 0),
+  );
+
+  readonly netResult = computed(() => this.totalReturned() - this.totalStake());
 
   readonly money = formatCop;
 
@@ -64,9 +68,48 @@ export class BetsPage {
   }
 
   returnLabel(bet: Bet): string {
-    if (bet.status === 'ANULADA') {
-      return 'Importe devuelto';
+    switch (bet.status) {
+      case 'ANULADA':
+        return 'Importe devuelto';
+      case 'PENDIENTE':
+        return 'Retorno potencial';
+      default:
+        return 'Retorno';
     }
-    return bet.status === 'GANADA' ? 'Ganancia' : 'Retorno potencial';
+  }
+
+  displayReturn(bet: Bet): number {
+    switch (bet.status) {
+      case 'PERDIDA':
+        return 0;
+      case 'ANULADA':
+        return bet.stake;
+      default:
+        return bet.potential;
+    }
+  }
+
+  netLabel(bet: Bet): string {
+    switch (bet.status) {
+      case 'GANADA':
+        return 'Ganancia neta';
+      case 'PERDIDA':
+        return 'Pérdida';
+      case 'ANULADA':
+        return 'Neto';
+      default:
+        return 'Ganancia potencial';
+    }
+  }
+
+  netValue(bet: Bet): number {
+    switch (bet.status) {
+      case 'PERDIDA':
+        return -bet.stake;
+      case 'ANULADA':
+        return 0;
+      default:
+        return bet.potential - bet.stake;
+    }
   }
 }

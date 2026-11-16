@@ -1,10 +1,13 @@
 package com.winup.service;
 
 import com.winup.entity.MatchEntity;
+import com.winup.entity.MovementEntity;
 import com.winup.entity.WalletEntity;
 import com.winup.exception.ValidationException;
+import com.winup.dto.MovementPageDto;
 import com.winup.dto.PlaceBetRequest;
 import com.winup.dto.WalletDto;
+import com.winup.dto.WalletSummaryDto;
 import com.winup.mapper.BetMapper;
 import com.winup.repository.BetRepository;
 import com.winup.repository.MatchRepository;
@@ -15,6 +18,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,6 +33,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -98,6 +105,40 @@ class BetServiceTest {
                         assertThat(exception.code()).isEqualTo("INVALID_SELECTION"));
 
         verify(walletRepository, never()).findWithLockByUserId(any());
+    }
+
+    @Test
+    void should_page_wallet_movements() {
+        MovementEntity movement = new MovementEntity();
+        movement.setId(UUID.randomUUID());
+        movement.setUserId(USER);
+        movement.setConcept("Apuesta");
+        movement.setAmount(new BigDecimal("-5000.00"));
+        movement.setType("GASTO");
+        movement.setCreatedAt(Instant.parse("2026-11-12T18:00:00Z"));
+        when(movementRepository.findByUserIdOrderByCreatedAtDesc(eq(USER), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(movement), PageRequest.of(0, 20), 25));
+
+        MovementPageDto page = betService.movements(USER, 0, 20);
+
+        assertThat(page.items()).hasSize(1);
+        assertThat(page.totalElements()).isEqualTo(25);
+        assertThat(page.hasNext()).isTrue();
+    }
+
+    @Test
+    void should_summarize_wallet_totals() {
+        when(walletRepository.findById(USER)).thenReturn(Optional.of(wallet("100000.00")));
+        when(movementRepository.totalIncome(USER)).thenReturn(new BigDecimal("150000.00"));
+        when(movementRepository.totalExpenses(USER)).thenReturn(new BigDecimal("-50000.00"));
+        when(movementRepository.countByUserId(USER)).thenReturn(4L);
+
+        WalletSummaryDto summary = betService.walletSummary(USER);
+
+        assertThat(summary.balance()).isEqualByComparingTo("100000.00");
+        assertThat(summary.income()).isEqualByComparingTo("150000.00");
+        assertThat(summary.expenses()).isEqualByComparingTo("50000.00");
+        assertThat(summary.movementCount()).isEqualTo(4);
     }
 
     @Test

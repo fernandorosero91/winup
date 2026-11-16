@@ -3,6 +3,7 @@ package com.winup.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
@@ -10,7 +11,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "bets")
+@Table(
+        name = "bets",
+        indexes = {
+                @Index(name = "idx_bets_user_created", columnList = "user_id, created_at"),
+                @Index(name = "idx_bets_match_status", columnList = "match_id, status")
+        }
+)
 public class BetEntity {
     @Id
     private UUID id;

@@ -2,6 +2,7 @@ package com.winup.money
 
 import com.winup.data.BetDto
 import com.winup.data.MovementDto
+import com.winup.data.MovementPageDto
 import com.winup.data.WalletDto
 import com.winup.data.toUi
 import org.junit.Assert.assertEquals
@@ -33,7 +34,12 @@ class ApiMoneyMappingTest {
         val wallet = WalletDto(
             balance = "100000.00",
             currency = "COP",
-            movements = listOf(
+            income = "150000.00",
+            expenses = "50000.00",
+            movementCount = 2,
+        )
+        val page = MovementPageDto(
+            items = listOf(
                 MovementDto(
                     id = "m-1",
                     concept = "Apuesta",
@@ -42,10 +48,15 @@ class ApiMoneyMappingTest {
                     type = "GASTO",
                 ),
             ),
+            page = 0,
+            size = 20,
+            totalElements = 1,
+            totalPages = 1,
+            hasNext = false,
         )
 
         assertEquals(BigDecimal("100000.00"), wallet.balance.toBigDecimal())
-        val movement = wallet.movements.first().toUi()
+        val movement = page.items.first().toUi()
         assertEquals(BigDecimal("-5000.00"), movement.amount)
         assertFalse(movement.isIncome)
     }

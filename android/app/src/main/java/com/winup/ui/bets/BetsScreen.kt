@@ -1,7 +1,6 @@
 package com.winup.ui.bets
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,22 +15,25 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.winup.data.Bet
 import com.winup.data.WinUpData
 import com.winup.money.formatCop
 import com.winup.ui.theme.LocalWinUpColors
+import java.math.BigDecimal
 
 @Composable
 fun BetsScreen() {
     val extras = LocalWinUpColors.current
+    val bets = WinUpData.bets
+    val settled = bets.filter { it.status != "PENDIENTE" }
+    val totalStake = bets.fold(BigDecimal.ZERO) { total, bet -> total + bet.stake }
+    val totalReturned = settled.fold(BigDecimal.ZERO) { total, bet -> total + displayReturn(bet) }
+    val netResult = totalReturned - totalStake
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -52,20 +54,24 @@ fun BetsScreen() {
             )
         }
 
-        items(WinUpData.bets, key = { it.id }) { bet ->
+        item {
+            BetSummary(
+                totalStake = totalStake,
+                totalReturned = totalReturned,
+                netResult = netResult,
+            )
+        }
+
+        items(bets, key = { it.id }) { bet ->
             BetCard(bet)
         }
     }
 }
 
 @Composable
-private fun BetCard(bet: Bet) {
+private fun BetSummary(totalStake: BigDecimal, totalReturned: BigDecimal, netResult: BigDecimal) {
     val extras = LocalWinUpColors.current
-    val statusColor = when (bet.status) {
-        "GANADA" -> extras.success
-        "PERDIDA" -> MaterialTheme.colorScheme.error
-        else -> extras.muted
-    }
+    val netColor = if (netResult.signum() >= 0) extras.success else MaterialTheme.colorScheme.error
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -73,98 +79,35 @@ private fun BetCard(bet: Bet) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = bet.market,
-                    color = extras.muted,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = bet.status,
-                    color = statusColor,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(statusColor.copy(alpha = 0.12f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                )
-            }
-
-            Text(
-                text = bet.match,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-            )
-
-            bet.outcome?.takeIf { it.finished }?.let { outcome ->
-                BetOutcomeRow(outcome)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column {
-                    Text(
-                        text = "Selección",
-                        color = extras.muted,
-                        fontSize = 10.sp,
-                    )
-                    Text(
-                        text = bet.selection,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Importe",
-                        color = extras.muted,
-                        fontSize = 10.sp,
-                    )
-                    Text(
-                        text = formatCop(bet.stake),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = when (bet.status) {
-                            "GANADA" -> "Ganancia"
-                            "ANULADA" -> "Reembolso"
-                            else -> "Potencial"
-                        },
-                        color = extras.muted,
-                        fontSize = 10.sp,
-                    )
-                    Text(
-                        text = formatCop(bet.potential),
-                        color = when (bet.status) {
-                            "GANADA" -> extras.success
-                            "ANULADA" -> extras.muted
-                            else -> MaterialTheme.colorScheme.onSurface
-                        },
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
+            SummaryStat("Apostado", totalStake, MaterialTheme.colorScheme.onSurface)
+            SummaryStat("Retornado", totalReturned, extras.success)
+            SummaryStat("Neto", netResult, netColor)
         }
+    }
+}
+
+@Composable
+private fun SummaryStat(label: String, value: BigDecimal, tone: Color) {
+    val extras = LocalWinUpColors.current
+    Column {
+        Text(
+            text = label,
+            color = extras.muted,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = formatCop(value),
+            color = tone,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }

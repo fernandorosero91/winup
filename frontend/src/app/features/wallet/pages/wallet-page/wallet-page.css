@@ -359,6 +359,27 @@ h1 {
   font-weight: 700;
 }
 
+.load-more {
+  align-self: center;
+  margin-top: 14px;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.load-more:hover {
+  border-color: var(--primary);
+}
+
+.load-more:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .deposit-message {
   margin: 0;
   padding: 10px 14px;
