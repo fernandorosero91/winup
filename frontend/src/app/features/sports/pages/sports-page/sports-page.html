@@ -1,0 +1,41 @@
+<section class="page">
+  <header class="page-head">
+    <span class="eyebrow">Catálogo</span>
+    <h1>Deportes</h1>
+    <p>Elige un deporte para ver sus partidos en vivo y sus cuotas.</p>
+  </header>
+
+  @if (loading()) {
+    <div class="sport-grid">
+      @for (item of [1, 2, 3, 4]; track item) {
+        <div class="sport-card skeleton" aria-hidden="true"></div>
+      }
+    </div>
+  } @else {
+    <div class="sport-grid">
+      @for (sport of summaries(); track sport.name) {
+        <button type="button" class="sport-card" (click)="open(sport.name)">
+          <span class="sport-art">
+            <ng-icon [name]="iconFor(sport.name)" size="32" aria-hidden="true" />
+          </span>
+          <span class="sport-info">
+            <strong>{{ sport.name }}</strong>
+            <span class="sport-live">
+              <span class="live-dot" aria-hidden="true"></span>
+              {{ sport.live }} en vivo
+            </span>
+            <span class="sport-detail">
+              {{ sport.upcoming }} próximos · {{ sport.total }} en total
+            </span>
+          </span>
+          <ng-icon name="lucideChevronRight" size="18" />
+        </button>
+      }
+    </div>
+
+    <button type="button" class="all" (click)="openAll()">
+      Ver todos los deportes en vivo
+      <ng-icon name="lucideArrowRight" size="16" />
+    </button>
+  }
+</section>

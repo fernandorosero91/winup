@@ -1,0 +1,44 @@
+<section class="withdraw-panel" aria-label="Retirar saldo">
+  <header class="withdraw-head">
+    <div>
+      <span class="eyebrow">Retiro</span>
+      <h2>Retira tu saldo</h2>
+    </div>
+    <button type="button" class="withdraw-close" (click)="closed.emit()" aria-label="Cerrar">
+      <ng-icon name="lucideX" size="18" />
+    </button>
+  </header>
+
+  <p class="withdraw-available">
+    Disponible <strong class="mono">{{ money(available()) }}</strong>
+  </p>
+
+  <div class="withdraw-chips">
+    @for (value of quickAmounts; track value) {
+      <button type="button" [class.is-active]="amount() === value" (click)="setAmount(value)">
+        {{ money(value) }}
+      </button>
+    }
+  </div>
+
+  <label class="withdraw-field">
+    <span>Importe a retirar</span>
+    <input
+      type="number"
+      min="5000"
+      [max]="available()"
+      step="1000"
+      [value]="amount()"
+      (input)="updateAmount($event)"
+    />
+    <small>Entre $ 5.000,00 y tu saldo disponible. Los retiros grandes quedan en revisión.</small>
+  </label>
+
+  @if (error()) {
+    <p class="withdraw-error" role="alert">{{ error() }}</p>
+  }
+
+  <button type="button" class="withdraw-submit" [disabled]="loading()" (click)="confirm()">
+    {{ loading() ? 'Procesando...' : 'Confirmar retiro' }}
+  </button>
+</section>

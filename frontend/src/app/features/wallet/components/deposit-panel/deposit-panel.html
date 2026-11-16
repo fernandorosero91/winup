@@ -1,0 +1,40 @@
+<section class="deposit-panel" aria-label="Depositar saldo">
+  <header class="deposit-head">
+    <div>
+      <span class="eyebrow">Depósito</span>
+      <h2>Recarga tu cartera</h2>
+    </div>
+    <button type="button" class="deposit-close" (click)="closed.emit()" aria-label="Cerrar">
+      <ng-icon name="lucideX" size="18" />
+    </button>
+  </header>
+
+  <div class="deposit-chips">
+    @for (value of quickDeposits; track value) {
+      <button type="button" [class.is-active]="amount() === value" (click)="setAmount(value)">
+        {{ money(value) }}
+      </button>
+    }
+  </div>
+
+  <label class="deposit-field">
+    <span>Importe</span>
+    <input
+      type="number"
+      min="5000"
+      max="500000"
+      step="1000"
+      [value]="amount()"
+      (input)="updateAmount($event)"
+    />
+    <small>Entre $ 5.000,00 y $ 500.000,00 COP</small>
+  </label>
+
+  @if (error()) {
+    <p class="deposit-error" role="alert">{{ error() }}</p>
+  }
+
+  <button type="button" class="deposit-submit" [disabled]="loading()" (click)="confirm()">
+    {{ loading() ? 'Procesando...' : 'Confirmar depósito' }}
+  </button>
+</section>
