@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-11-10T12:00:00Z",
+  "source": "prueba",
+  "fixtures": [
+    {
+      "externalId": "test-football-finished",
+      "sport": "Fútbol",
+      "league": "LaLiga",
+      "home": {
+        "name": "Real Madrid",
+        "shortName": "RMA"
+      },
+      "away": {
+        "name": "Barcelona",
+        "shortName": "BAR"
+      },
+      "startsAt": "2026-11-09T20:00:00Z",
+      "status": "FINISHED",
+      "score": {
+        "home": 2,
+        "away": 1,
+        "minute": 90,
+        "period": "FT"
+      },
+      "odds": {
+        "local": 2.1,
+        "draw": 3.4,
+        "away": 3.2
+      }
+    },
+    {
+      "externalId": "test-football-live",
+      "sport": "Fútbol",
+      "league": "Premier League",
+      "home": {
+        "name": "Manchester City",
+        "shortName": "MCI"
+      },
+      "away": {
+        "name": "Liverpool",
+        "shortName": "LIV"
+      },
+      "startsAt": "2026-11-10T18:30:00Z",
+      "status": "LIVE",
+      "score": {
+        "home": 1,
+        "away": 0,
+        "minute": 65,
+        "period": "2H"
+      },
+      "odds": {
+        "local": 1.62,
+        "draw": 3.8,
+        "away": 4.2
+      }
+    },
+    {
+      "externalId": "test-nba-scheduled",
+      "sport": "NBA",
+      "league": "NBA",
+      "home": {
+        "name": "Los Angeles Lakers",
+        "shortName": "LAL"
+      },
+      "away": {
+        "name": "Boston Celtics",
+        "shortName": "BOS"
+      },
+      "startsAt": "2026-11-12T20:00:00Z",
+      "status": "SCHEDULED",
+      "score": {
+        "home": 0,
+        "away": 0,
+        "minute": 0,
+        "period": "NS"
+      },
+      "odds": {
+        "local": 2.05,
+        "draw": null,
+        "away": 1.8
+      }
+    }
+  ]
+}
