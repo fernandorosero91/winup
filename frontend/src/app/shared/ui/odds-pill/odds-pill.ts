@@ -10,5 +10,6 @@ export class OddsPill {
   readonly label = input('1');
   readonly value = input(0);
   readonly selected = input(false);
+  readonly disabled = input(false);
   readonly pick = output<void>();
 }

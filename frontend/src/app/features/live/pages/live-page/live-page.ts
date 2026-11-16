@@ -30,6 +30,7 @@ export class LivePage implements OnInit {
     { label: 'En vivo', value: 'EN VIVO' },
     { label: 'Próximos', value: 'PRÓXIMO' },
     { label: 'Finalizados', value: 'FINALIZADO' },
+    { label: 'Anulados', value: 'ANULADO' },
   ];
 
   readonly sportChips = [
@@ -52,6 +53,9 @@ export class LivePage implements OnInit {
     }
     if (status === 'FINALIZADO') {
       return 'Resultados recientes';
+    }
+    if (status === 'ANULADO') {
+      return 'Partidos anulados';
     }
     return 'Todos los partidos';
   });
