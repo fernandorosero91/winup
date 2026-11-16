@@ -1,0 +1,8 @@
+<span
+  class="chip"
+  [class.live]="status() === 'EN VIVO'"
+  [class.closed]="status() === 'FINALIZADO'"
+  [class.suspended]="status() === 'SUSPENDIDO'"
+>
+  {{ status() }}
+</span>

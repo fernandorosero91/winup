@@ -1,0 +1,32 @@
+@if (totalPages() > 1) {
+  <nav class="pagination" aria-label="Paginación de partidos">
+    <button type="button" class="page-arrow" [disabled]="!canGoBack()" (click)="goTo(page() - 1)">
+      Anterior
+    </button>
+
+    <div class="page-numbers" role="group" aria-label="Número de página">
+      @for (item of visiblePages(); track item) {
+        <button
+          type="button"
+          class="page-number"
+          [class.is-active]="page() === item"
+          [attr.aria-current]="page() === item ? 'page' : null"
+          [disabled]="disabled()"
+          (click)="goTo(item)"
+        >
+          {{ item + 1 }}
+        </button>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="page-arrow"
+      [disabled]="!canGoForward()"
+      (click)="goTo(page() + 1)"
+    >
+      Siguiente
+    </button>
+  </nav>
+  <p class="page-status">Página {{ page() + 1 }} de {{ totalPages() }}</p>
+}

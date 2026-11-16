@@ -1,0 +1,27 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.chip.live {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.chip.closed {
+  color: var(--subtle);
+}
+
+.chip.suspended {
+  border-color: var(--danger);
+  color: var(--danger);
+}
