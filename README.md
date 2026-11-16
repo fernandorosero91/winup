@@ -22,7 +22,7 @@ Usuario:
 - Historial de apuestas y resultados.
 - Cartera con saldo disponible, saldo retenido y movimientos.
 - Depósito con Checkout Pro y retiro con retención.
-- Notificaciones en web y Android.
+- Notificaciones en web y Android, con marcar como leídas y limpiar el historial.
 
 Administración:
 

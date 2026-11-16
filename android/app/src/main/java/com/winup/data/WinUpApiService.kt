@@ -1,6 +1,7 @@
 package com.winup.data
 
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -33,6 +34,9 @@ interface WinUpApiService {
 
     @POST("api/v1/notifications/read")
     suspend fun markNotificationsRead(@Body request: NotificationReadRequest)
+
+    @DELETE("api/v1/notifications")
+    suspend fun clearNotifications()
 
     @GET("api/v1/wallet")
     suspend fun wallet(): WalletDto

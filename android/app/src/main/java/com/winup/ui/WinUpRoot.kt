@@ -239,6 +239,9 @@ fun WinUpRoot() {
                         onReadAll = {
                             scope.launch { WinUpData.markAllNotificationsRead(WinUpSession.api) }
                         },
+                        onClear = {
+                            scope.launch { WinUpData.clearNotifications(WinUpSession.api) }
+                        },
                     )
                 }
             }

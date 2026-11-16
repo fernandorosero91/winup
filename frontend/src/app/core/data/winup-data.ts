@@ -236,6 +236,16 @@ export class WinupData {
     this.api.markNotificationsRead([id]).subscribe({ error: () => this.rollbackRead(id) });
   }
 
+  clearNotifications(): void {
+    this.api.clearNotifications().subscribe({
+      next: () => {
+        this.serverNotifications.set([]);
+        this.readNotifications.set([]);
+      },
+      error: () => undefined,
+    });
+  }
+
   markAllNotificationsRead(): void {
     const pending = this.notifications()
       .map((item) => item.id)

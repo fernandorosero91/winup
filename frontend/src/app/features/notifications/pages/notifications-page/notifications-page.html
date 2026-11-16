@@ -32,14 +32,24 @@
           </button>
         </div>
 
-        <button
-          type="button"
-          class="mark-all"
-          [disabled]="data.unreadNotifications() === 0"
-          (click)="markAll()"
-        >
-          Marcar todas como leídas
-        </button>
+        <div class="toolbar-actions">
+          <button
+            type="button"
+            class="mark-all"
+            [disabled]="data.unreadNotifications() === 0"
+            (click)="markAll()"
+          >
+            Marcar todas como leídas
+          </button>
+          <button
+            type="button"
+            class="clear-all"
+            [disabled]="data.notifications().length === 0"
+            (click)="clearAll()"
+          >
+            Limpiar
+          </button>
+        </div>
       </div>
 
       <div class="notice-list">

@@ -35,6 +35,7 @@ fun NotificationsSheet(
     onClose: () -> Unit,
     onRead: (String) -> Unit,
     onReadAll: () -> Unit,
+    onClear: () -> Unit,
 ) {
     val items = WinUpData.notifications
     val unread = WinUpData.unreadNotifications()
@@ -65,6 +66,11 @@ fun NotificationsSheet(
             if (unread > 0) {
                 TextButton(onClick = onReadAll) {
                     Text("Marcar todas")
+                }
+            }
+            if (items.isNotEmpty()) {
+                TextButton(onClick = onClear) {
+                    Text("Limpiar")
                 }
             }
             IconButton(onClick = onClose) {

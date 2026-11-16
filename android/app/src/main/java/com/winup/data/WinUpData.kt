@@ -131,6 +131,16 @@ object WinUpData {
         api.markNotificationsRead(NotificationReadRequest(listOf(id)))
     }
 
+    suspend fun clearNotifications(api: WinUpApiService) {
+        try {
+            api.clearNotifications()
+            notifications.clear()
+            readNotifications.clear()
+        } catch (exception: Exception) {
+            error = errorMessage(exception, "No se pudieron limpiar las notificaciones")
+        }
+    }
+
     suspend fun markAllNotificationsRead(api: WinUpApiService) {
         val pending = notifications.map { it.id }.filter { it !in readNotifications }
         if (pending.isEmpty()) {
