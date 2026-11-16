@@ -6,10 +6,12 @@ import com.winup.mapper.MatchMapper;
 import com.winup.dto.MatchDto;
 import com.winup.dto.MatchPageDto;
 import com.winup.dto.PlaceBetRequest;
+import com.winup.dto.ProviderHealthDto;
 import com.winup.dto.SportSummaryDto;
 import com.winup.dto.WalletDto;
 import com.winup.service.BetService;
 import com.winup.service.MatchService;
+import com.winup.service.sports.SportsProviderHealthService;
 import com.winup.controller.websocket.DashboardSocketHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -35,17 +37,20 @@ public class ApiController {
     private final BetService betService;
     private final DashboardSocketHandler socketHandler;
     private final MatchMapper matchMapper;
+    private final SportsProviderHealthService providerHealthService;
 
     public ApiController(
             MatchService matchService,
             BetService betService,
             DashboardSocketHandler socketHandler,
-            MatchMapper matchMapper
+            MatchMapper matchMapper,
+            SportsProviderHealthService providerHealthService
     ) {
         this.matchService = matchService;
         this.betService = betService;
         this.socketHandler = socketHandler;
         this.matchMapper = matchMapper;
+        this.providerHealthService = providerHealthService;
     }
 
     @GetMapping("/matches")
@@ -87,6 +92,11 @@ public class ApiController {
     @GetMapping("/wallet")
     public WalletDto wallet(Authentication authentication) {
         return betService.wallet(authentication.getName());
+    }
+
+    @GetMapping("/health/providers")
+    public ProviderHealthDto providerHealth() {
+        return providerHealthService.health();
     }
 
     @GetMapping("/health")
