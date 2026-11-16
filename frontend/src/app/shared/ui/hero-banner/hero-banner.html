@@ -1,0 +1,47 @@
+<section class="hero" aria-label="Banner de deportes WINUP">
+  @for (slide of slides; track slide.src; let index = $index) {
+    <img
+      class="slide"
+      [class.is-active]="active() === index"
+      [src]="slide.src"
+      alt=""
+      [style.object-position]="slide.position"
+    />
+  }
+
+  <span class="shade" aria-hidden="true"></span>
+
+  <div class="hero-content">
+    <span class="hero-brand">
+      <app-brand-logo size="lg" variant="dark" />
+    </span>
+    <h1>CADA SEGUNDO <span>IMPORTA</span></h1>
+    <p>MÁS DEPORTES. MÁS EMOCIÓN. MÁS GANANCIAS.</p>
+    <a class="hero-cta" routerLink="/en-vivo">
+      Apuesta ahora
+      <ng-icon name="lucideArrowRight" size="16" />
+    </a>
+  </div>
+
+  <div class="controls">
+    <div class="dots" role="group" aria-label="Seleccionar imagen del banner">
+      @for (slide of slides; track slide.src; let index = $index) {
+        <button
+          type="button"
+          [attr.aria-pressed]="active() === index"
+          [attr.aria-label]="'Ver imagen de ' + slide.label"
+          [class.is-active]="active() === index"
+          (click)="goTo(index)"
+        ></button>
+      }
+    </div>
+    <button
+      type="button"
+      class="toggle"
+      [attr.aria-label]="paused() ? 'Reanudar carrusel' : 'Pausar carrusel'"
+      (click)="toggle()"
+    >
+      <ng-icon [name]="paused() ? 'lucidePlay' : 'lucidePause'" size="13" />
+    </button>
+  </div>
+</section>
