@@ -1,0 +1,25 @@
+<section class="panel table-wrap">
+  <table>
+    <thead>
+      <tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      @for (user of users(); track user.id) {
+        <tr>
+          <td>{{ user.displayName }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <select
+              [value]="user.role"
+              (change)="roleChange.emit({ user, role: $any($event.target).value })"
+            >
+              <option value="USER">USER</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </td>
+          <td>{{ user.status }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

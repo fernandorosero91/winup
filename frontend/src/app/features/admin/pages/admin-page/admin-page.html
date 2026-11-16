@@ -1,0 +1,331 @@
+<section class="page">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Operación</span>
+      <h1>Administración</h1>
+      <p>Partidos simulados, usuarios, pagos y contabilidad.</p>
+    </div>
+    <div class="head-actions">
+      <button type="button" class="secondary" (click)="load()">Actualizar datos</button>
+      <button type="button" class="refresh" (click)="reloadApp()">Recargar app</button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Secciones de administración">
+    @for (item of tabs; track item.id) {
+      <button
+        type="button"
+        [class.is-active]="tab() === item.id"
+        (click)="setTab($any(item.id))"
+      >
+        {{ item.label }}
+      </button>
+    }
+  </nav>
+
+  @if (error()) {
+    <p class="alert error" role="alert">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="alert ok" role="status">{{ message() }}</p>
+  }
+
+  @if (tab() === 'resumen') {
+    <app-admin-summary
+      [dashboard]="dashboard()"
+      [actionLoading]="actionLoading()"
+      (ensure)="ensureSports()"
+      (seed)="seed()"
+    />
+  }
+
+  @if (tab() === 'usuarios') {
+    <app-admin-users-table
+      [users]="users()"
+      (roleChange)="updateRole($event.user, $event.role)"
+    />
+  }
+
+  @if (tab() === 'promociones') {
+    <section class="panel promo-form">
+      <div class="panel-head">
+        <h2>Nueva promoción</h2>
+        <span>Se entrega por Rabbit a la bandeja, la web, el móvil y el correo</span>
+      </div>
+
+      <div class="promo-fields">
+        <label>
+          <span>Título</span>
+          <input
+            type="text"
+            maxlength="140"
+            placeholder="Bono de bienvenida"
+            [value]="promoTitle()"
+            (input)="updatePromoTitle($any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          <span>Mensaje</span>
+          <textarea
+            rows="3"
+            maxlength="280"
+            placeholder="Deposita hoy y recibe un bono del 20 por ciento"
+            [value]="promoDetail()"
+            (input)="updatePromoDetail($any($event.target).value)"
+          ></textarea>
+        </label>
+
+        <label>
+          <span>Programar para (opcional)</span>
+          <input
+            type="datetime-local"
+            [value]="promoScheduledAt()"
+            (input)="updatePromoSchedule($any($event.target).value)"
+          />
+          <small>Si la dejas vacía, la promoción se envía de inmediato.</small>
+        </label>
+
+        <button type="button" class="primary" [disabled]="actionLoading()" (click)="createPromotion()">
+          {{ promoScheduledAt() ? 'Programar promoción' : 'Enviar promoción' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="panel table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Mensaje</th>
+            <th>Estado</th>
+            <th>Programada</th>
+            <th>Enviada</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (promo of promotions(); track promo.id) {
+            <tr>
+              <td>{{ promo.title }}</td>
+              <td>{{ promo.detail }}</td>
+              <td><span class="chip">{{ promo.status }}</span></td>
+              <td class="mono">{{ formatDate(promo.scheduledAt) }}</td>
+              <td class="mono">{{ formatDate(promo.sentAt) }}</td>
+              <td>
+                @if (promo.status === 'SCHEDULED') {
+                  <button type="button" class="secondary" (click)="cancelPromotion(promo)">
+                    Cancelar
+                  </button>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="muted">Todavía no hay promociones.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
+  @if (tab() === 'pagos') {
+    <section class="panel table-wrap">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Usuario</th><th>Importe</th><th>Proveedor</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          @for (payment of payments(); track payment.id) {
+            <tr>
+              <td class="mono">{{ shortId(payment.id) }}</td>
+              <td class="mono">{{ shortId(payment.userId) }}</td>
+              <td class="mono">{{ money(payment.amountCop) }}</td>
+              <td>{{ payment.provider }}</td>
+              <td><span class="chip">{{ payment.status }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
+  @if (tab() === 'partidos') {
+    <section class="panel promo-form">
+      <div class="panel-head">
+        <h2>Crear partido</h2>
+        <span>Se publica en Kafka y su finalización se programa por Rabbit</span>
+      </div>
+
+      <div class="promo-fields match-fields">
+        <label>
+          <span>Deporte</span>
+          <select [value]="matchSport()" (change)="matchSport.set($any($event.target).value)">
+            @for (sport of sports; track sport.name) {
+              <option [value]="sport.name" [selected]="sport.name === matchSport()">
+                {{ sport.label }}
+              </option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Liga</span>
+          <input
+            type="text"
+            placeholder="LaLiga"
+            [value]="matchLeague()"
+            (input)="matchLeague.set($any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          <span>Equipo local</span>
+          <input
+            type="text"
+            placeholder="Real Madrid"
+            [value]="matchHome()"
+            (input)="matchHome.set($any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          <span>Equipo visitante</span>
+          <input
+            type="text"
+            placeholder="Barcelona"
+            [value]="matchAway()"
+            (input)="matchAway.set($any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          <span>Cuota local</span>
+          <input
+            type="number"
+            min="1.01"
+            max="100"
+            step="0.01"
+            [value]="matchLocalOdds()"
+            (input)="matchLocalOdds.set(+$any($event.target).value)"
+          />
+        </label>
+
+        @if (matchDrawAvailable()) {
+          <label>
+            <span>Cuota empate</span>
+            <input
+              type="number"
+              min="1.01"
+              max="100"
+              step="0.01"
+              [value]="matchDrawOdds()"
+              (input)="matchDrawOdds.set(+$any($event.target).value)"
+            />
+          </label>
+        }
+
+        <label>
+          <span>Cuota visitante</span>
+          <input
+            type="number"
+            min="1.01"
+            max="100"
+            step="0.01"
+            [value]="matchAwayOdds()"
+            (input)="matchAwayOdds.set(+$any($event.target).value)"
+          />
+        </label>
+
+        <label>
+          <span>Minuto</span>
+          <input
+            type="number"
+            min="0"
+            max="90"
+            [value]="matchMinute()"
+            (input)="matchMinute.set(+$any($event.target).value)"
+          />
+        </label>
+
+        <button type="button" class="primary" [disabled]="actionLoading()" (click)="createMatch()">
+          Crear partido
+        </button>
+      </div>
+    </section>
+
+    <div class="table-toolbar">
+      <div class="table-filters" role="group" aria-label="Filtrar partidos por estado">
+        @for (status of matchStatuses; track status) {
+          <button
+            type="button"
+            [class.is-active]="matchStatus() === status"
+            (click)="setMatchStatus(status)"
+          >
+            {{ status }}
+          </button>
+        }
+      </div>
+      <span class="table-count mono">
+        {{ matchRangeStart() }}–{{ matchRangeEnd() }} de {{ matchTotal() }}
+      </span>
+    </div>
+
+    <section class="panel table-wrap">
+      <table>
+        <thead>
+          <tr><th>Deporte</th><th>Liga</th><th>Partido</th><th>Estado</th><th>Fuente</th></tr>
+        </thead>
+        <tbody>
+          @for (match of matches(); track match.id) {
+            <tr>
+              <td>{{ match.sport }}</td>
+              <td>{{ match.league }}</td>
+              <td>{{ match.home }} vs {{ match.away }}</td>
+              <td>{{ match.status }}</td>
+              <td>
+                <span class="chip">{{ match.source }}</span>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="muted">No hay partidos con este filtro.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    @if (matchTotalPages() > 1) {
+      <app-pagination
+        [page]="matchPage()"
+        [totalPages]="matchTotalPages()"
+        [disabled]="false"
+        (pageChange)="goToMatchPage($event)"
+      />
+    }
+  }
+
+  @if (tab() === 'ledger') {
+    <section class="panel table-wrap">
+      <table>
+        <thead>
+          <tr><th>Cuenta</th><th>Débito</th><th>Crédito</th><th>Concepto</th></tr>
+        </thead>
+        <tbody>
+          @for (entry of ledger(); track entry.id) {
+            <tr>
+              <td class="mono">{{ entry.account }}</td>
+              <td class="mono">{{ money(entry.debit) }}</td>
+              <td class="mono">{{ money(entry.credit) }}</td>
+              <td>{{ entry.concept }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</section>

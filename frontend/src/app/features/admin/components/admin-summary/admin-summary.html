@@ -1,0 +1,27 @@
+<div class="metrics">
+  <article><span>Usuarios</span><strong>{{ dashboard()?.users ?? 0 }}</strong></article>
+  <article><span>Partidos</span><strong>{{ dashboard()?.matches ?? 0 }}</strong></article>
+  <article><span>Apuestas</span><strong>{{ dashboard()?.bets ?? 0 }}</strong></article>
+  <article><span>Pagos</span><strong>{{ dashboard()?.payments ?? 0 }}</strong></article>
+  <article>
+    <span>Débitos ledger</span>
+    <strong class="mono">{{ moneyString(dashboard()?.ledgerDebits ?? '0') }}</strong>
+  </article>
+  <article>
+    <span>Créditos ledger</span>
+    <strong class="mono">{{ moneyString(dashboard()?.ledgerCredits ?? '0') }}</strong>
+  </article>
+</div>
+
+<section class="panel">
+  <h2>Simulación</h2>
+  <p>Garantiza un partido activo por deporte o genera 300 partidos simulados.</p>
+  <div class="actions">
+    <button type="button" class="primary" [disabled]="actionLoading()" (click)="ensure.emit()">
+      Asegurar 14 deportes
+    </button>
+    <button type="button" class="secondary" [disabled]="actionLoading()" (click)="seed.emit()">
+      Generar 300 simulados
+    </button>
+  </div>
+</section>

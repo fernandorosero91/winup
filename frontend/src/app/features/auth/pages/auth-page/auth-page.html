@@ -1,0 +1,141 @@
+<main class="auth-page">
+  <div class="auth-glow" aria-hidden="true"></div>
+
+  <section class="auth-brand">
+    <app-brand-logo size="lg" variant="dark" [tagline]="true" />
+
+    <div class="brand-copy">
+      <span class="eyebrow">Apuestas deportivas en vivo</span>
+      <h1>CADA SEGUNDO <span>IMPORTA</span></h1>
+      <p>Más deportes. Más emoción. Más control sobre tu dinero.</p>
+    </div>
+
+    <ul class="benefits">
+      <li>
+        <span class="benefit-icon"><ng-icon name="lucideRadio" size="18" /></span>
+        <span><strong>En vivo</strong><small>Cuotas que se mueven contigo.</small></span>
+      </li>
+      <li>
+        <span class="benefit-icon"><ng-icon name="lucideTrophy" size="18" /></span>
+        <span><strong>Multideporte</strong><small>Fútbol, NBA, tenis, F1 y más.</small></span>
+      </li>
+      <li>
+        <span class="benefit-icon"><ng-icon name="lucideShieldCheck" size="18" /></span>
+        <span><strong>Seguro</strong><small>Tus datos y tu saldo, protegidos.</small></span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="auth-panel">
+    <app-theme-toggle class="theme" />
+
+    <div class="auth-card">
+      <header class="auth-head">
+        <span class="eyebrow">{{ mode() === 'login' ? 'Bienvenido de nuevo' : 'Nueva cuenta' }}</span>
+        <h2>{{ mode() === 'login' ? 'Iniciar sesión' : 'Crear cuenta' }}</h2>
+        <p>
+          {{ mode() === 'login'
+            ? 'Accede para consultar tus apuestas y tu cartera.'
+            : 'Regístrate y recibe 100.000 COP de saldo ficticio para practicar.' }}
+        </p>
+      </header>
+
+      @if (error(); as message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+
+      @if (mode() === 'login') {
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+          <label for="login-email">Correo electrónico</label>
+          <input
+            id="login-email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="tu@correo.com"
+            [attr.aria-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid"
+          />
+          @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+            <small class="field-error">Introduce un correo válido.</small>
+          }
+
+          <label for="login-password">Contraseña</label>
+          <input
+            id="login-password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="Tu contraseña"
+          />
+          @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+            <small class="field-error">La contraseña debe tener al menos 8 caracteres.</small>
+          }
+
+          <button type="submit" class="submit" [disabled]="loading()">
+            <ng-icon name="lucideArrowRight" size="16" />
+            {{ loading() ? 'Entrando...' : 'Entrar' }}
+          </button>
+        </form>
+
+        <p class="switch">
+          ¿No tienes cuenta?
+          <a routerLink="/registro">Crear una cuenta</a>
+        </p>
+      } @else {
+        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+          <label for="register-name">Nombre</label>
+          <input
+            id="register-name"
+            type="text"
+            formControlName="displayName"
+            autocomplete="name"
+            placeholder="Tu nombre"
+          />
+
+          <label for="register-email">Correo electrónico</label>
+          <input
+            id="register-email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="tu@correo.com"
+          />
+
+          <label for="register-password">Contraseña</label>
+          <input
+            id="register-password"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            placeholder="Mínimo 8 caracteres, una letra y un número"
+          />
+          @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+            <small class="field-error">Usa al menos 8 caracteres, una letra y un número.</small>
+          }
+
+          <label for="register-confirm">Repite la contraseña</label>
+          <input
+            id="register-confirm"
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            placeholder="Repite tu contraseña"
+          />
+          @if (registerForm.errors?.['passwordMismatch'] && registerForm.controls.confirmPassword.touched) {
+            <small class="field-error">Las contraseñas no coinciden.</small>
+          }
+
+          <button type="submit" class="submit" [disabled]="loading()">
+            <ng-icon name="lucideUser" size="16" />
+            {{ loading() ? 'Creando cuenta...' : 'Crear cuenta' }}
+          </button>
+        </form>
+
+        <p class="switch">
+          ¿Ya tienes cuenta?
+          <a routerLink="/login">Iniciar sesión</a>
+        </p>
+      }
+    </div>
+  </section>
+</main>
