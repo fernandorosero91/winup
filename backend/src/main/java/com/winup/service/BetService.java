@@ -2,8 +2,11 @@ package com.winup.service;
 
 import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
+import com.winup.model.BetStatus;
+import com.winup.model.MatchStatus;
 import com.winup.model.SportCatalog;
 import com.winup.model.vo.BetSelection;
+import com.winup.model.vo.IdempotencyKey;
 import com.winup.model.vo.Stake;
 import com.winup.exception.ValidationException;
 import com.winup.entity.MovementEntity;
@@ -62,13 +65,12 @@ public class BetService {
         if (request == null || request.matchId() == null || request.stake() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Datos de apuesta incompletos");
         }
+        IdempotencyKey key = new IdempotencyKey(idempotencyKey);
 
-        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            BetEntity existing = betRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
-            if (existing != null) {
-                MatchEntity match = matchRepository.findById(existing.getMatchId()).orElse(null);
-                return betMapper.toDto(existing, match);
-            }
+        BetEntity existing = betRepository.findByIdempotencyKey(key.value()).orElse(null);
+        if (existing != null) {
+            MatchEntity match = matchRepository.findById(existing.getMatchId()).orElse(null);
+            return betMapper.toDto(existing, match);
         }
 
         BetSelection selection = BetSelection.from(request.selection());
@@ -77,7 +79,7 @@ public class BetService {
         MatchEntity match = matchRepository.findById(request.matchId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partido no encontrado"));
 
-        if (!"OPEN".equals(match.getStatus())) {
+        if (MatchStatus.from(match.getStatus()) != MatchStatus.OPEN) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El partido ya no admite apuestas");
         }
 
@@ -117,9 +119,9 @@ public class BetService {
         bet.setSelection(selection.name());
         bet.setStake(stake.amount());
         bet.setOdds(odds);
-        bet.setStatus("PENDING");
+        bet.setStatus(BetStatus.PENDING.code());
         bet.setPayout(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_EVEN));
-        bet.setIdempotencyKey(idempotencyKey);
+        bet.setIdempotencyKey(key.value());
         bet.setCreatedAt(Instant.now());
         betRepository.save(bet);
         notificationService.recordPending(bet, match);

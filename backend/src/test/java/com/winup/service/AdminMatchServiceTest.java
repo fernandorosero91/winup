@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.MatchEntity;
+import com.winup.exception.ValidationException;
 import com.winup.dto.CreateMatchRequest;
 import com.winup.dto.MatchDto;
 import com.winup.dto.OddsDto;
@@ -39,6 +40,9 @@ class AdminMatchServiceTest {
 
     @Mock
     private MatchMapper matchMapper;
+
+    @Mock
+    private MatchOddsSnapshotService snapshotService;
 
     @Test
     void should_create_a_live_match_with_the_requested_odds() {
@@ -84,7 +88,7 @@ class AdminMatchServiceTest {
         );
 
         assertThatThrownBy(() -> service().create(request))
-                .isInstanceOf(ResponseStatusException.class);
+                .isInstanceOf(ValidationException.class);
         verify(matchRepository, never()).save(any());
     }
 
@@ -125,6 +129,7 @@ class AdminMatchServiceTest {
                 matchRepository,
                 eventPublisher,
                 matchMapper,
+                snapshotService,
                 Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }

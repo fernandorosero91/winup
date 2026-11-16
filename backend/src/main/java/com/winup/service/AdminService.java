@@ -2,6 +2,9 @@ package com.winup.service;
 
 import com.winup.entity.PaymentIntentEntity;
 import com.winup.entity.UserEntity;
+import com.winup.model.MatchStatus;
+import com.winup.model.vo.PromoDetail;
+import com.winup.model.vo.PromoTitle;
 import com.winup.dto.AdminDashboardDto;
 import com.winup.dto.AdminLedgerDto;
 import com.winup.dto.AdminPaymentDto;
@@ -78,10 +81,10 @@ public class AdminService {
     }
 
     public void promote(String title, String detail) {
-        if (title == null || title.isBlank() || detail == null || detail.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Promoción incompleta");
-        }
-        eventPublisher.promotion(title.trim(), detail.trim());
+        eventPublisher.promotion(
+                new PromoTitle(title).value(),
+                new PromoDetail(detail).value()
+        );
     }
 
     public List<AdminUserDto> users() {
@@ -151,7 +154,7 @@ public class AdminService {
 
     public int ensureSports() {
         generatorService.ensureAllSports();
-        return matchRepository.findDistinctSportsByStatus("OPEN").size();
+        return matchRepository.findDistinctSportsByStatus(MatchStatus.OPEN.code()).size();
     }
 
     public int seed(int count) {
