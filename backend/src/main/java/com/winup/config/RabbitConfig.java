@@ -25,6 +25,7 @@ public class RabbitConfig {
     public static final String EMAIL_LOSS_QUEUE = "q.email.loss";
     public static final String EMAIL_PROMO_QUEUE = "q.email.promo";
     public static final String INBOX_QUEUE = "q.notify.inbox";
+    public static final String DASHBOARD_QUEUE = "q.notify.dashboard";
     public static final String WEB_QUEUE = "q.notify.web";
     public static final String MOBILE_QUEUE = "q.notify.mobile";
     public static final String DEAD_LETTER_EXCHANGE = "winup.dlx";
@@ -75,6 +76,11 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Queue notificationDashboardQueue() {
+        return durableQueue(DASHBOARD_QUEUE, "notify.dashboard");
+    }
+
+    @Bean
     public Queue notificationWebQueue() {
         return durableQueue(WEB_QUEUE, "notify.web");
     }
@@ -87,6 +93,13 @@ public class RabbitConfig {
     @Bean
     public Binding inboxBinding(Queue notificationInboxQueue, FanoutExchange notificationsFanoutExchange) {
         return BindingBuilder.bind(notificationInboxQueue).to(notificationsFanoutExchange);
+    }
+
+    @Bean
+    public Binding dashboardBinding(Queue notificationDashboardQueue, TopicExchange notificationsExchange) {
+        return BindingBuilder.bind(notificationDashboardQueue)
+                .to(notificationsExchange)
+                .with("notify.dashboard.*");
     }
 
     @Bean
