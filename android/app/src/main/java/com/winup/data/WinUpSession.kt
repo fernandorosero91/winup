@@ -20,6 +20,8 @@ object WinUpSession {
         user.value = store.user
     }
 
+    fun isReady(): Boolean = ::store.isInitialized && ::api.isInitialized
+
     fun save(response: AuthResponse) {
         store.token = response.token
         store.user = response.user

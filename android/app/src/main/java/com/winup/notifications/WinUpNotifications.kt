@@ -19,6 +19,7 @@ import com.winup.data.NotificationItem
 
 object WinUpNotifications {
     private const val CHANNEL_ID = "winup_notifications"
+    private val recent = mutableMapOf<String, Long>()
 
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -47,6 +48,17 @@ object WinUpNotifications {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
+            return
+        }
+        val dedupeKey = "$title|$body"
+        val now = System.currentTimeMillis()
+        val duplicated = synchronized(recent) {
+            val previous = recent[dedupeKey]
+            recent[dedupeKey] = now
+            recent.entries.removeAll { now - it.value > 60_000 }
+            previous != null && now - previous < 8_000
+        }
+        if (duplicated) {
             return
         }
         val intent = Intent(context, MainActivity::class.java).apply {

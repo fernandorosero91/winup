@@ -72,6 +72,7 @@ import com.winup.data.RealtimeClient
 import com.winup.data.WinUpData
 import com.winup.data.WinUpSession
 import com.winup.notifications.NotificationAnnouncer
+import com.winup.notifications.WinUpPush
 import com.winup.money.formatCop
 import com.winup.money.formatCopWhole
 import com.winup.ui.auth.AuthScreen
@@ -132,6 +133,7 @@ fun WinUpRoot() {
                 bootstrapping = false
             } else {
                 bootstrapping = true
+                WinUpPush.register(context, WinUpSession.api)
                 val startedAt = System.currentTimeMillis()
                 WinUpData.refresh(WinUpSession.api)
                 NotificationAnnouncer.announce(context, WinUpData.notifications)
