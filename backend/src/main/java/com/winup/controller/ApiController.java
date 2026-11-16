@@ -5,10 +5,12 @@ import com.winup.dto.BetDto;
 import com.winup.mapper.MatchMapper;
 import com.winup.dto.MatchDto;
 import com.winup.dto.MatchPageDto;
+import com.winup.dto.MovementPageDto;
 import com.winup.dto.PlaceBetRequest;
 import com.winup.dto.ProviderHealthDto;
 import com.winup.dto.SportSummaryDto;
 import com.winup.dto.WalletDto;
+import com.winup.dto.WalletSummaryDto;
 import com.winup.service.BetService;
 import com.winup.service.MatchService;
 import com.winup.service.sports.SportsProviderHealthService;
@@ -92,6 +94,20 @@ public class ApiController {
     @GetMapping("/wallet")
     public WalletDto wallet(Authentication authentication) {
         return betService.wallet(authentication.getName());
+    }
+
+    @GetMapping("/wallet/summary")
+    public WalletSummaryDto walletSummary(Authentication authentication) {
+        return betService.walletSummary(authentication.getName());
+    }
+
+    @GetMapping("/wallet/movements")
+    public MovementPageDto movements(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication authentication
+    ) {
+        return betService.movements(authentication.getName(), page, size);
     }
 
     @GetMapping("/health/providers")

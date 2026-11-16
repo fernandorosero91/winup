@@ -19,17 +19,9 @@ export class WalletPage {
   readonly panel = signal<WalletPanel>(null);
   readonly message = signal<string | null>(null);
 
-  readonly income = computed(() =>
-    this.data.movements()
-      .filter((movement) => movement.amount > 0)
-      .reduce((total, movement) => total + movement.amount, 0),
-  );
+  readonly income = computed(() => this.data.wallet().income);
 
-  readonly expenses = computed(() =>
-    this.data.movements()
-      .filter((movement) => movement.amount < 0)
-      .reduce((total, movement) => total + Math.abs(movement.amount), 0),
-  );
+  readonly expenses = computed(() => this.data.wallet().expenses);
 
   readonly money = formatCop;
 
@@ -56,6 +48,10 @@ export class WalletPage {
   openWithdraw(): void {
     this.message.set(null);
     this.panel.set('withdraw');
+  }
+
+  loadMore(): void {
+    this.data.loadMoreMovements();
   }
 
   closePanel(): void {

@@ -1,6 +1,7 @@
 package com.winup.data
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -74,6 +75,12 @@ object WinUpData {
     val readNotifications = mutableStateListOf<String>()
     var balance by mutableStateOf(BigDecimal.ZERO)
     var heldBalance by mutableStateOf(BigDecimal.ZERO)
+    var incomeTotal by mutableStateOf(BigDecimal.ZERO)
+    var expensesTotal by mutableStateOf(BigDecimal.ZERO)
+    var movementPage by mutableIntStateOf(0)
+    var movementTotal by mutableIntStateOf(0)
+    var movementHasNext by mutableStateOf(false)
+    var movementsLoading by mutableStateOf(false)
     var loading by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
     var sportFilter by mutableStateOf("TODOS")
@@ -102,14 +109,38 @@ object WinUpData {
             val wallet = api.wallet()
             balance = wallet.balance.toBigDecimal()
             heldBalance = wallet.heldBalance.toBigDecimal()
-            movements.clear()
-            movements.addAll(wallet.movements.map { it.toUi() })
+            incomeTotal = wallet.income.toBigDecimal()
+            expensesTotal = wallet.expenses.toBigDecimal()
+            loadMovements(api, 0)
             error = null
         } catch (exception: Exception) {
             error = exception.message ?: "No se pudieron cargar los datos"
         } finally {
             loading = false
         }
+    }
+
+    suspend fun loadMoreMovements(api: WinUpApiService) {
+        if (movementsLoading || !movementHasNext) {
+            return
+        }
+        movementsLoading = true
+        try {
+            loadMovements(api, movementPage + 1)
+        } finally {
+            movementsLoading = false
+        }
+    }
+
+    private suspend fun loadMovements(api: WinUpApiService, page: Int) {
+        val result = api.movements(page = page, size = 20)
+        if (page == 0) {
+            movements.clear()
+        }
+        movements.addAll(result.items.map { it.toUi() })
+        movementPage = result.page
+        movementTotal = result.totalElements
+        movementHasNext = result.hasNext
     }
 
     suspend fun refreshNotifications(api: WinUpApiService) {

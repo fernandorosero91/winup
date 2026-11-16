@@ -23,16 +23,11 @@ import androidx.compose.ui.unit.sp
 import com.winup.data.WinUpData
 import com.winup.money.formatCopWhole
 import com.winup.ui.theme.LocalWinUpColors
-import java.math.BigDecimal
 
 @Composable
 fun WalletStats() {
-    val income = WinUpData.movements
-        .filter { it.isIncome }
-        .fold(BigDecimal.ZERO) { total, movement -> total + movement.amount }
-    val expenses = WinUpData.movements
-        .filterNot { it.isIncome }
-        .fold(BigDecimal.ZERO) { total, movement -> total + movement.amount.abs() }
+    val income = WinUpData.incomeTotal
+    val expenses = WinUpData.expensesTotal
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -40,7 +35,7 @@ fun WalletStats() {
     ) {
         StatTile("Ingresos", formatCopWhole(income), Modifier.weight(1f))
         StatTile("Gastos", formatCopWhole(expenses), Modifier.weight(1f))
-        StatTile("Movimientos", WinUpData.movements.size.toString(), Modifier.weight(1f))
+        StatTile("Movimientos", WinUpData.movementTotal.toString(), Modifier.weight(1f))
     }
 }
 

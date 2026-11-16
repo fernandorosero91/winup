@@ -62,7 +62,7 @@
           <ng-icon name="lucideTicket" size="16" />
         </span>
         <span class="stat-label">Movimientos</span>
-        <strong class="mono">{{ data.movements().length }}</strong>
+        <strong class="mono">{{ data.movementTotal() }}</strong>
       </div>
     </article>
   </div>
@@ -82,7 +82,7 @@
   <section class="movements">
     <header class="section-head">
       <h2>Movimientos</h2>
-      <span>Últimos 30 días</span>
+      <span>Ordenados por fecha</span>
     </header>
 
     <div class="movement-list">
@@ -105,5 +105,16 @@
         </article>
       }
     </div>
+
+    @if (data.movementHasNext()) {
+      <button
+        type="button"
+        class="load-more"
+        [disabled]="data.movementsLoading()"
+        (click)="loadMore()"
+      >
+        {{ data.movementsLoading() ? 'Cargando...' : 'Cargar más movimientos' }}
+      </button>
+    }
   </section>
 </section>

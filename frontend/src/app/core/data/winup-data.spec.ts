@@ -16,8 +16,24 @@ describe('WinupData', () => {
     );
     vi.spyOn(api, 'bets').mockReturnValue(of([]));
     vi.spyOn(api, 'wallet').mockReturnValue(
-      of({ balance: '100000.00',
-        heldBalance: '0.00', currency: 'COP', movements: [] }),
+      of({
+        balance: '100000.00',
+        heldBalance: '0.00',
+        currency: 'COP',
+        income: '0.00',
+        expenses: '0.00',
+        movementCount: 0,
+      }),
+    );
+    vi.spyOn(api, 'movements').mockReturnValue(
+      of({
+        items: [],
+        page: 0,
+        size: 20,
+        totalElements: 0,
+        totalPages: 0,
+        hasNext: false,
+      }),
     );
     vi.spyOn(api, 'notifications').mockReturnValue(of([]));
     vi.spyOn(api, 'readNotifications').mockReturnValue(of([]));
@@ -31,7 +47,14 @@ describe('WinupData', () => {
         balance: '100000.00',
         heldBalance: '0.00',
         currency: 'COP',
-        movements: [
+        income: '150000.00',
+        expenses: '50000.00',
+        movementCount: 2,
+      }),
+    );
+    vi.mocked(api.movements).mockReturnValue(
+      of({
+        items: [
           {
             id: 'm-1',
             concept: 'Apuesta',
@@ -40,6 +63,11 @@ describe('WinupData', () => {
             type: 'GASTO',
           },
         ],
+        page: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+        hasNext: false,
       }),
     );
 

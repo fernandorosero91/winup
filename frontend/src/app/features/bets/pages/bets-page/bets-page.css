@@ -66,6 +66,10 @@ h1 {
   color: var(--success);
 }
 
+.loss {
+  color: var(--danger);
+}
+
 [data-theme="dark"] .success {
   color: var(--primary);
 }
@@ -273,6 +277,14 @@ h1 {
 .bet-values strong {
   font-size: var(--text-base);
   font-weight: 700;
+}
+
+.bet-values .net-label {
+  margin-top: 6px;
+}
+
+.bet-values .net-value {
+  font-size: var(--text-sm);
 }
 
 @media (max-width: 900px) {

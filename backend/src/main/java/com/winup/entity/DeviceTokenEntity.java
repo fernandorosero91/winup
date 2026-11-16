@@ -3,13 +3,17 @@ package com.winup.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "device_token")
+@Table(
+        name = "device_token",
+        indexes = @Index(name = "idx_device_token_user", columnList = "user_id")
+)
 public class DeviceTokenEntity {
     @Id
     private UUID id;

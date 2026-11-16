@@ -10,6 +10,7 @@ import type {
   MatchQuery,
   NotificationResponse,
   SportSummary,
+  MovementPageResponse,
   WalletResponse,
   WithdrawalResponse,
 } from './winup-api.types';
@@ -42,7 +43,12 @@ export class WinupApi {
   }
 
   wallet(): Observable<WalletResponse> {
-    return this.http.get<WalletResponse>(`${this.base}/wallet`);
+    return this.http.get<WalletResponse>(`${this.base}/wallet/summary`);
+  }
+
+  movements(page: number, size: number): Observable<MovementPageResponse> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<MovementPageResponse>(`${this.base}/wallet/movements`, { params });
   }
 
   notifications(): Observable<AppNotification[]> {

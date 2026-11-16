@@ -42,7 +42,18 @@ export interface WalletResponse {
   balance: string;
   heldBalance: string;
   currency: string;
-  movements: MovementResponse[];
+  income: string;
+  expenses: string;
+  movementCount: number;
+}
+
+export interface MovementPageResponse {
+  items: MovementResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
 }
 
 export interface WithdrawalResponse {

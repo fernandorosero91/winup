@@ -61,6 +61,9 @@ export interface Wallet {
   balance: number;
   heldBalance: number;
   currency: string;
+  income: number;
+  expenses: number;
+  movementCount: number;
 }
 
 export interface AppNotification {

@@ -11,8 +11,14 @@
         <strong class="mono">{{ money(totalStake()) }}</strong>
       </div>
       <div>
-        <span>Ganancias</span>
-        <strong class="mono success">{{ money(totalWon()) }}</strong>
+        <span>Total retornado</span>
+        <strong class="mono success">{{ money(totalReturned()) }}</strong>
+      </div>
+      <div>
+        <span>Resultado neto</span>
+        <strong class="mono" [class.success]="netResult() >= 0" [class.loss]="netResult() < 0">
+          {{ money(netResult()) }}
+        </strong>
       </div>
     </div>
   </header>
@@ -75,7 +81,15 @@
           <div class="right">
             <span>{{ returnLabel(bet) }}</span>
             <strong class="mono" [class.success]="bet.status === 'GANADA'">
-              {{ money(bet.potential) }}
+              {{ money(displayReturn(bet)) }}
+            </strong>
+            <span class="net-label">{{ netLabel(bet) }}</span>
+            <strong
+              class="mono net-value"
+              [class.success]="netValue(bet) > 0"
+              [class.loss]="netValue(bet) < 0"
+            >
+              {{ money(netValue(bet)) }}
             </strong>
           </div>
         </footer>
