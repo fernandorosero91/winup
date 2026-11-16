@@ -60,7 +60,7 @@ public class StaleMatchWatchdog {
             if (!match.isSimulated()) {
                 continue;
             }
-            MatchResultSimulator.Result result = resultSimulator.simulate(match.getSport());
+            MatchResultSimulator.Result result = resultSimulator.simulate(match);
             log.info(
                     "Watchdog cierra el partido atascado {}: {} {} - {}",
                     match.getId(),

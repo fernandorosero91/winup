@@ -46,7 +46,7 @@ class StaleMatchWatchdogTest {
                 eq(0),
                 eq(NOW.minusMillis(180000))
         )).thenReturn(List.of(stale));
-        when(resultSimulator.simulate(stale.getSport()))
+        when(resultSimulator.simulate(stale))
                 .thenReturn(new MatchResultSimulator.Result(2, 1, "LOCAL"));
 
         watchdog().closeStaleMatches();
@@ -62,7 +62,7 @@ class StaleMatchWatchdogTest {
 
         watchdog().closeStaleMatches();
 
-        verify(resultSimulator, never()).simulate(anyString());
+        verify(resultSimulator, never()).simulate(any(MatchEntity.class));
         verify(eventPublisher, never()).matchFinished(any(), anyString(), anyInt(), anyInt());
     }
 
@@ -82,7 +82,7 @@ class StaleMatchWatchdogTest {
         MatchEntity second = match(true);
         when(matchRepository.findByStatusAndMinuteGreaterThanAndCreatedAtBefore(anyString(), anyInt(), any()))
                 .thenReturn(List.of(first, second));
-        when(resultSimulator.simulate(anyString()))
+        when(resultSimulator.simulate(any(MatchEntity.class)))
                 .thenReturn(new MatchResultSimulator.Result(3, 0, "LOCAL"));
 
         watchdog().closeStaleMatches();

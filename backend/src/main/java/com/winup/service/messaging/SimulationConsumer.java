@@ -50,7 +50,7 @@ public class SimulationConsumer {
             return;
         }
 
-        MatchResultSimulator.Result result = resultSimulator.simulate(match.getSport());
+        MatchResultSimulator.Result result = resultSimulator.simulate(match);
 
         log.info(
                 "Partido {} finalizado: {} {} - {}",
