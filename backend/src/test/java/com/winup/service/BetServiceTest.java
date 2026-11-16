@@ -62,9 +62,9 @@ class BetServiceTest {
     private BetService betService;
 
     @Test
-    void should_reject_stake_below_one_thousand_cop() {
+    void should_reject_stake_below_five_hundred_cop() {
         assertThatThrownBy(() -> betService.place(
-                new PlaceBetRequest(MATCH_ID, "LOCAL", new BigDecimal("999.00")),
+                new PlaceBetRequest(MATCH_ID, "LOCAL", new BigDecimal("499.00")),
                 USER,
                 KEY
         ))
@@ -101,13 +101,13 @@ class BetServiceTest {
     }
 
     @Test
-    void should_accept_stake_of_one_thousand_cop() {
+    void should_accept_stake_of_five_hundred_cop() {
         when(betRepository.findByIdempotencyKey(KEY)).thenReturn(Optional.empty());
         when(matchRepository.findById(MATCH_ID)).thenReturn(Optional.of(openMatch()));
         when(walletRepository.findWithLockByUserId(USER)).thenReturn(Optional.of(wallet("100000.00")));
         when(betMapper.toDto(any(), any())).thenReturn(null);
 
-        betService.place(new PlaceBetRequest(MATCH_ID, "LOCAL", new BigDecimal("1000.00")), USER, KEY);
+        betService.place(new PlaceBetRequest(MATCH_ID, "LOCAL", new BigDecimal("500.00")), USER, KEY);
 
         verify(walletRepository).save(any(WalletEntity.class));
         verify(betRepository).save(any());
