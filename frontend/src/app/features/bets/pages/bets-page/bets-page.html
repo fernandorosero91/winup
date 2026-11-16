@@ -1,0 +1,78 @@
+<section class="page">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Historial</span>
+      <h1>Mis apuestas</h1>
+      <p>Sigue el estado de tus apuestas en tiempo real.</p>
+    </div>
+    <div class="summary">
+      <div>
+        <span>Total apostado</span>
+        <strong class="mono">{{ money(totalStake()) }}</strong>
+      </div>
+      <div>
+        <span>Ganancias</span>
+        <strong class="mono success">{{ money(totalWon()) }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Filtrar apuestas">
+    @for (tab of tabs; track tab) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="filter() === tab"
+        [class.is-active]="filter() === tab"
+        (click)="filter.set(tab)"
+      >
+        {{ tab === 'TODAS' ? 'Todas' : tab === 'PENDIENTE' ? 'Pendientes' : tab === 'GANADA' ? 'Ganadas' : 'Perdidas' }}
+      </button>
+    }
+  </div>
+
+  <div class="bet-list">
+    @for (bet of filtered(); track bet.id) {
+      <article class="bet">
+        <header class="bet-head">
+          <span class="market">{{ bet.market }}</span>
+          <span
+            class="status"
+            [class.is-won]="bet.status === 'GANADA'"
+            [class.is-lost]="bet.status === 'PERDIDA'"
+            [class.is-pending]="bet.status === 'PENDIENTE'"
+          >
+            {{ statusLabel(bet) }}
+          </span>
+        </header>
+
+        <h2>{{ bet.match }}</h2>
+
+        <div class="bet-meta">
+          <span class="selection">{{ bet.selection }}</span>
+          <span class="odd mono">Cuota {{ bet.odds.toFixed(2) }}</span>
+          <span class="date">{{ bet.placedAt }}</span>
+        </div>
+
+        <footer class="bet-values">
+          <div>
+            <span>Importe</span>
+            <strong class="mono">{{ money(bet.stake) }}</strong>
+          </div>
+          <div class="right">
+            <span>{{ bet.status === 'GANADA' ? 'Ganancia' : 'Retorno potencial' }}</span>
+            <strong class="mono" [class.success]="bet.status === 'GANADA'">
+              {{ money(bet.potential) }}
+            </strong>
+          </div>
+        </footer>
+      </article>
+    } @empty {
+      <app-empty-state
+        icon="lucideTicket"
+        title="No hay apuestas en este filtro"
+        description="Cuando apuestes, tus apuestas aparecerán aquí."
+      />
+    }
+  </div>
+</section>

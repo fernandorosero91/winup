@@ -1,0 +1,73 @@
+<section class="slip">
+  <header class="slip-head">
+    <h2>
+      CUPÓN
+      <span class="count">1</span>
+    </h2>
+    <button type="button" class="clear" (click)="clear()">Limpiar</button>
+  </header>
+
+  @if (data.selectedMatch(); as match) {
+    <div class="selection">
+      <div class="selection-main">
+        <span class="market">Resultado final</span>
+        <strong>{{ match.home }} vs {{ match.away }}</strong>
+        <span class="pick">{{ selectionLabel() }}</span>
+      </div>
+      <span class="odds mono">{{ selectedOdds().toFixed(2) }}</span>
+      <button type="button" class="remove" aria-label="Quitar selección" (click)="clear()">
+        <ng-icon name="lucideX" size="14" />
+      </button>
+    </div>
+
+    <div class="stake">
+      <label for="stake">Importe</label>
+      <div class="stake-input">
+        <input
+          id="stake"
+          type="number"
+          min="1000"
+          max="500000"
+          step="1000"
+          [value]="data.stake()"
+          (input)="onStake($event)"
+        />
+        <span>COP</span>
+      </div>
+      <div class="chips">
+        @for (value of quick; track value) {
+          <button
+            type="button"
+            [class.is-active]="data.stake() === value"
+            (click)="data.updateStake(value)"
+          >
+            {{ money(value) }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="return">
+      <span>Retorno estimado</span>
+      <strong class="mono">{{ money(data.potentialReturn()) }}</strong>
+    </div>
+
+    <button type="button" class="place" [disabled]="placing()" (click)="place()">
+      {{ placing() ? 'Enviando...' : 'Apostar ahora' }}
+    </button>
+
+    @if (placed()) {
+      <p class="success">Apuesta registrada. Revisa “Mis apuestas”.</p>
+    }
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+  } @else {
+    <app-empty-state
+      icon="lucideTicket"
+      title="Cupón vacío"
+      description="Selecciona una cuota para empezar."
+    />
+  }
+</section>

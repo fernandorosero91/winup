@@ -1,0 +1,94 @@
+<div class="live-layout">
+  <div class="feed">
+    @if (mode() === 'inicio') {
+      <app-hero-banner />
+    } @else {
+      <header class="page-head">
+        <span class="eyebrow">En directo</span>
+        <h1>{{ heading() }}</h1>
+        <p>{{ subtitle() }}</p>
+      </header>
+    }
+
+    <section class="filters" aria-label="Filtros de partidos">
+      <div class="sport-chips" role="group" aria-label="Filtrar por deporte">
+        @for (chip of sportChips; track chip.name) {
+          <button
+            type="button"
+            class="sport"
+            [class.is-active]="data.sportFilter() === chip.name"
+            [attr.aria-pressed]="data.sportFilter() === chip.name"
+            (click)="pickSport(chip.name)"
+          >
+            <span class="sport-icon">
+              <ng-icon [name]="chip.icon" size="18" />
+            </span>
+            <span>{{ chip.label }}</span>
+          </button>
+        }
+      </div>
+
+      @if (mode() === 'en-vivo') {
+        <div class="status-tabs" role="tablist" aria-label="Filtrar por estado">
+          @for (tab of statusTabs; track tab.value) {
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="data.statusFilter() === tab.value"
+              [class.is-active]="data.statusFilter() === tab.value"
+              (click)="pickStatus(tab.value)"
+            >
+              {{ tab.label }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="section">
+      <header class="section-head">
+        <h2>
+          {{ listTitle() }}
+          <span class="count mono">{{ data.rangeStart() }}–{{ data.rangeEnd() }} de {{ data.total() }}</span>
+        </h2>
+        @if (mode() === 'inicio') {
+          <a routerLink="/en-vivo">Ver todos</a>
+        }
+      </header>
+
+      @if (data.loading()) {
+        <p class="state">Cargando partidos...</p>
+      } @else if (data.matches().length === 0) {
+        <app-empty-state
+          icon="lucideSearch"
+          title="Sin partidos con estos filtros"
+          description="Prueba con otro deporte o cambia el estado del partido."
+        />
+        <button type="button" class="reset" (click)="reset()">Ver todos los partidos en vivo</button>
+      } @else {
+        <div class="match-grid" [class.is-busy]="data.loadingPage()">
+          @for (match of data.matches(); track match.id) {
+            <app-match-tile
+              [match]="match"
+              [selected]="selectionFor(match)"
+              (pick)="select($event)"
+            />
+          }
+        </div>
+
+        @if (data.totalPages() > 1) {
+          <app-pagination
+            [page]="data.page()"
+            [totalPages]="data.totalPages()"
+            [disabled]="data.loadingPage()"
+            (pageChange)="data.goToPage($event)"
+          />
+        }
+      }
+    </section>
+  </div>
+
+  <aside class="slip-column">
+    <app-bet-slip />
+  </aside>
+</div>
