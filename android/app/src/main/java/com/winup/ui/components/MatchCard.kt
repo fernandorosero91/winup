@@ -2,15 +2,12 @@ package com.winup.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.EmojiEvents
@@ -39,6 +36,17 @@ fun MatchCard(
     onSelect: (String) -> Unit,
 ) {
     val extras = LocalWinUpColors.current
+    val voided = match.status == "ANULADO"
+    val centerText = when {
+        voided -> "ANULADO"
+        match.isLive || match.status == "FINALIZADO" -> "${match.homeScore} - ${match.awayScore}"
+        else -> "VS"
+    }
+    val centerSize = when {
+        voided -> 9.sp
+        match.isLive || match.status == "FINALIZADO" -> 20.sp
+        else -> 12.sp
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -71,6 +79,7 @@ fun MatchCard(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
+                    MatchSourceBadge(match)
                 }
                 if (match.isLive) {
                     LiveBadge(match.minute)
@@ -100,14 +109,10 @@ fun MatchCard(
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = if (match.isLive || match.status == "FINALIZADO") {
-                        "${match.homeScore} - ${match.awayScore}"
-                    } else {
-                        "VS"
-                    },
+                    text = centerText,
                     color = MaterialTheme.colorScheme.onSurface,
                     fontFamily = FontFamily.Monospace,
-                    fontSize = if (match.isLive || match.status == "FINALIZADO") 20.sp else 12.sp,
+                    fontSize = centerSize,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -130,64 +135,12 @@ fun MatchCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                OddsButton("1", match.localOdds, Modifier.weight(1f)) { onSelect("LOCAL") }
+                OddsButton("1", match.localOdds, Modifier.weight(1f), !voided) { onSelect("LOCAL") }
                 if (match.drawMarket) {
-                    OddsButton("X", match.drawOdds, Modifier.weight(1f)) { onSelect("EMPATE") }
+                    OddsButton("X", match.drawOdds, Modifier.weight(1f), !voided) { onSelect("EMPATE") }
                 }
-                OddsButton("2", match.awayOdds, Modifier.weight(1f)) { onSelect("VISITANTE") }
+                OddsButton("2", match.awayOdds, Modifier.weight(1f), !voided) { onSelect("VISITANTE") }
             }
         }
-    }
-}
-
-@Composable
-private fun TeamBadge(short: String) {
-    val extras = LocalWinUpColors.current
-    Box(
-        modifier = Modifier
-            .size(30.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = short,
-            color = extras.muted,
-            fontSize = 8.sp,
-            fontWeight = FontWeight.Black,
-        )
-    }
-}
-
-@Composable
-private fun OddsButton(
-    label: String,
-    value: Double,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val extras = LocalWinUpColors.current
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            color = extras.muted,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "%.2f".format(value),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-        )
     }
 }

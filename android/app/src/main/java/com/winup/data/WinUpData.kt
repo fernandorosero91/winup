@@ -218,8 +218,14 @@ object WinUpData {
             homeScore = event.homeScore,
             awayScore = event.awayScore,
             minute = event.minute,
-            isLive = event.status == "OPEN",
-            status = if (event.status == "CLOSED") "FINALIZADO" else current.status,
+            isLive = event.status == "OPEN" && event.minute > 0,
+            status = when {
+                event.status == "CLOSED" -> "FINALIZADO"
+                event.status == "VOID" -> "ANULADO"
+                event.status == "OPEN" && event.minute > 0 -> "EN VIVO"
+                event.status == "OPEN" -> "PRÓXIMO"
+                else -> current.status
+            },
         )
     }
 
