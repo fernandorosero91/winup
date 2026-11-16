@@ -59,9 +59,9 @@ describe('WinupData', () => {
     expect(service.potentialReturn()).toBe(82500);
   });
 
-  it('clamps the stake between 1000 and 500000', () => {
+  it('clamps the stake between 500 and 500000', () => {
     service.updateStake(0);
-    expect(service.stake()).toBe(1000);
+    expect(service.stake()).toBe(500);
 
     service.updateStake(900000);
     expect(service.stake()).toBe(500000);

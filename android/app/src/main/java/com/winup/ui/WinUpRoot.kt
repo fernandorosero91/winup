@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Close
@@ -38,6 +39,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -60,6 +62,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -353,7 +356,10 @@ private fun BetSlipSheet(
 ) {
     val extras = LocalWinUpColors.current
     val scope = rememberCoroutineScope()
+    var stakeText by remember { mutableStateOf("50000") }
     var stake by remember { mutableStateOf(BigDecimal("50000.00")) }
+    val stakeValid = validStake(stakeText)
+    val returnStake = if (stakeValid) stake else BigDecimal.ZERO
     var placing by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -429,13 +435,17 @@ private fun BetSlipSheet(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             listOf(
+                BigDecimal("500.00"),
+                BigDecimal("1000.00"),
                 BigDecimal("10000.00"),
-                BigDecimal("25000.00"),
                 BigDecimal("50000.00"),
-                BigDecimal("100000.00"),
             ).forEach { value ->
                 Button(
-                    onClick = { stake = value },
+                    onClick = {
+                        stake = value
+                        stakeText = value.setScale(0, RoundingMode.HALF_EVEN).toPlainString()
+                        error = null
+                    },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (stake.compareTo(value) == 0) {
@@ -457,6 +467,28 @@ private fun BetSlipSheet(
             }
         }
 
+        OutlinedTextField(
+            value = stakeText,
+            onValueChange = { raw ->
+                val digits = raw.filter(Char::isDigit).take(6)
+                stakeText = digits
+                digits.toBigDecimalOrNull()?.let { parsed ->
+                    stake = parsed.setScale(2, RoundingMode.HALF_EVEN)
+                }
+                error = if (digits.isNotEmpty() && !validStake(digits)) {
+                    "El importe debe estar entre 500 y 500.000 COP"
+                } else {
+                    null
+                }
+            },
+            label = { Text("Importe manual (COP)") },
+            supportingText = { Text("Mínimo 500 / máximo 500.000") },
+            isError = stakeText.isNotEmpty() && !stakeValid,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
         Row(
@@ -470,7 +502,7 @@ private fun BetSlipSheet(
             )
             Text(
                 text = formatCop(
-                    stake.multiply(odds.toBigDecimal()).setScale(2, RoundingMode.HALF_EVEN),
+                    returnStake.multiply(odds.toBigDecimal()).setScale(2, RoundingMode.HALF_EVEN),
                 ),
                 color = extras.success,
                 fontFamily = FontFamily.Monospace,
@@ -501,6 +533,10 @@ private fun BetSlipSheet(
                 if (placing) {
                     return@Button
                 }
+                if (!stakeValid) {
+                    error = "El importe mínimo es 500 COP"
+                    return@Button
+                }
                 placing = true
                 message = null
                 error = null
@@ -519,7 +555,7 @@ private fun BetSlipSheet(
                     placing = false
                 }
             },
-            enabled = !placing,
+            enabled = !placing && stakeValid,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -534,6 +570,11 @@ private fun BetSlipSheet(
             )
         }
     }
+}
+
+private fun validStake(value: String): Boolean {
+    val parsed = value.toBigDecimalOrNull() ?: return false
+    return parsed >= BigDecimal("500.00") && parsed <= BigDecimal("500000.00")
 }
 
 private fun initialsOf(name: String?): String {

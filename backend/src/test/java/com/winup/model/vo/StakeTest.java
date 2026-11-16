@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class StakeTest {
     @Test
     void should_accept_minimum_stake() {
-        assertThat(new Stake(new BigDecimal("1000")).amount()).isEqualByComparingTo("1000.00");
+        assertThat(new Stake(new BigDecimal("500")).amount()).isEqualByComparingTo("500.00");
     }
 
     @Test
@@ -21,7 +21,7 @@ class StakeTest {
 
     @Test
     void should_reject_stake_below_minimum() {
-        assertThatThrownBy(() -> new Stake(new BigDecimal("999.99")))
+        assertThatThrownBy(() -> new Stake(new BigDecimal("499.99")))
                 .isInstanceOfSatisfying(ValidationException.class, exception ->
                         assertThat(exception.code()).isEqualTo("INVALID_STAKE"));
     }
@@ -42,6 +42,6 @@ class StakeTest {
 
     @Test
     void should_normalize_scale_to_two_decimals() {
-        assertThat(new Stake(new BigDecimal("1000.555")).amount().scale()).isEqualTo(2);
+        assertThat(new Stake(new BigDecimal("500.555")).amount().scale()).isEqualTo(2);
     }
 }

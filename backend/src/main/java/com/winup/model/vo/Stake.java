@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public record Stake(BigDecimal amount) {
-    private static final BigDecimal MIN = new BigDecimal("1000.00");
+    private static final BigDecimal MIN = new BigDecimal("500.00");
     private static final BigDecimal MAX = new BigDecimal("500000.00");
 
     public Stake {

@@ -269,7 +269,7 @@ export class WinupData {
   }
 
   updateStake(value: number): void {
-    this.stake.set(Math.max(1000, Math.min(500000, value)));
+    this.stake.set(Math.max(500, Math.min(500000, value)));
   }
 
   potentialReturn(): number {
