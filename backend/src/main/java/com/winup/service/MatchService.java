@@ -1,0 +1,116 @@
+package com.winup.service;
+
+import com.winup.entity.MatchEntity;
+import com.winup.model.SportCatalog;
+import com.winup.dto.DtoMapper;
+import com.winup.dto.MatchPageDto;
+import com.winup.dto.SportSummaryDto;
+import com.winup.repository.MatchRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class MatchService {
+    private final MatchRepository matchRepository;
+    private final MatchFactory matchFactory;
+
+    public MatchService(MatchRepository matchRepository, MatchFactory matchFactory) {
+        this.matchRepository = matchRepository;
+        this.matchFactory = matchFactory;
+    }
+
+    @Transactional
+    public MatchEntity create() {
+        return matchRepository.save(matchFactory.create());
+    }
+
+    @Transactional
+    public MatchEntity createForSport(String sport) {
+        return matchRepository.save(matchFactory.createForSport(sport));
+    }
+
+    public List<MatchEntity> all() {
+        return matchRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    public MatchPageDto page(String status, String sport, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(50, Math.max(1, size));
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<MatchEntity> result = matchRepository.search(
+                normalizeStatus(status),
+                SportCatalog.normalize(sport),
+                pageable
+        );
+        return new MatchPageDto(
+                result.getContent().stream().map(DtoMapper::toMatch).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.hasNext()
+        );
+    }
+
+    public List<SportSummaryDto> sports() {
+        return SportCatalog.SPORTS.stream()
+                .map(sport -> new SportSummaryDto(
+                        sport,
+                        matchRepository.countBySportAndStatusAndMinuteGreaterThan(sport, "OPEN", 0),
+                        matchRepository.countBySportAndStatusAndMinute(sport, "OPEN", 0),
+                        matchRepository.countBySportAndStatus(sport, "CLOSED"),
+                        matchRepository.countBySport(sport)
+                ))
+                .toList();
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank() || "TODOS".equalsIgnoreCase(status)) {
+            return "TODOS";
+        }
+        if ("EN VIVO".equalsIgnoreCase(status) || "LIVE".equalsIgnoreCase(status)) {
+            return "EN VIVO";
+        }
+        if ("PRÓXIMO".equalsIgnoreCase(status)
+                || "PROXIMO".equalsIgnoreCase(status)
+                || "UPCOMING".equalsIgnoreCase(status)) {
+            return "PRÓXIMO";
+        }
+        if ("FINALIZADO".equalsIgnoreCase(status) || "FINISHED".equalsIgnoreCase(status)) {
+            return "FINALIZADO";
+        }
+        return "TODOS";
+    }
+
+    public Optional<MatchEntity> find(UUID id) {
+        return matchRepository.findById(id);
+    }
+
+    public long activeCount() {
+        return matchRepository.countByStatus("OPEN");
+    }
+
+    @Transactional
+    public MatchEntity finish(UUID id, String winner, int homeScore, int awayScore) {
+        MatchEntity match = matchRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Partido no encontrado"));
+        if ("CLOSED".equals(match.getStatus())) {
+            return match;
+        }
+        match.setStatus("CLOSED");
+        match.setWinner(winner);
+        match.setHomeScore(homeScore);
+        match.setAwayScore(awayScore);
+        match.setMinute(90);
+        match.setUpdatedAt(Instant.now());
+        return matchRepository.save(match);
+    }
+}
