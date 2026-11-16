@@ -26,7 +26,7 @@
         [class.is-active]="filter() === tab"
         (click)="filter.set(tab)"
       >
-        {{ tab === 'TODAS' ? 'Todas' : tab === 'PENDIENTE' ? 'Pendientes' : tab === 'GANADA' ? 'Ganadas' : 'Perdidas' }}
+        {{ tabLabel(tab) }}
       </button>
     }
   </div>
@@ -40,6 +40,7 @@
             class="status"
             [class.is-won]="bet.status === 'GANADA'"
             [class.is-lost]="bet.status === 'PERDIDA'"
+            [class.is-void]="bet.status === 'ANULADA'"
             [class.is-pending]="bet.status === 'PENDIENTE'"
           >
             {{ statusLabel(bet) }}
@@ -72,7 +73,7 @@
             <strong class="mono">{{ money(bet.stake) }}</strong>
           </div>
           <div class="right">
-            <span>{{ bet.status === 'GANADA' ? 'Ganancia' : 'Retorno potencial' }}</span>
+            <span>{{ returnLabel(bet) }}</span>
             <strong class="mono" [class.success]="bet.status === 'GANADA'">
               {{ money(bet.potential) }}
             </strong>

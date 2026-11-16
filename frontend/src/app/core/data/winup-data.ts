@@ -2,80 +2,16 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap, throwError } from 'rxjs';
 import { WinupApi, toMovement } from '../api/winup-api';
 import type { RealtimeMatchEvent } from '../realtime/realtime.service';
+import {
+  DEMO_BETS,
+  DEMO_MATCHES,
+  DEMO_MOVEMENTS,
+  DEMO_WALLET,
+  SPORTS,
+} from './winup-data.fixtures';
+import type { AppNotification, Bet, Match, Movement, Selection, StatusFilter, Wallet } from './winup-data.types';
 
-export type MatchStatus = 'EN VIVO' | 'PRÓXIMO' | 'FINALIZADO' | 'SUSPENDIDO';
-export type StatusFilter = 'TODOS' | 'EN VIVO' | 'PRÓXIMO' | 'FINALIZADO';
-export type Selection = 'LOCAL' | 'EMPATE' | 'VISITANTE';
-export type BetStatus = 'PENDIENTE' | 'GANADA' | 'PERDIDA';
-export type NotificationKind = 'GANADA' | 'PERDIDA' | 'PENDIENTE' | 'PROMOCION';
-
-export interface Match {
-  id: string;
-  sport: string;
-  league: string;
-  home: string;
-  away: string;
-  homeShort: string;
-  awayShort: string;
-  homeScore: number;
-  awayScore: number;
-  minute: number;
-  status: MatchStatus;
-  startsAt: string;
-  odds: {
-    local: number;
-    draw: number;
-    away: number;
-  };
-  drawMarket: boolean;
-  source?: string;
-  isSimulated?: boolean;
-}
-
-export interface BetOutcome {
-  winner: string | null;
-  winnerName: string | null;
-  homeScore: number | null;
-  awayScore: number | null;
-  finished: boolean;
-}
-
-export interface Bet {
-  id: string;
-  matchId?: string;
-  match: string;
-  market: string;
-  selection: string;
-  stake: number;
-  odds: number;
-  potential: number;
-  status: BetStatus;
-  placedAt: string;
-  outcome: BetOutcome | null;
-}
-
-export interface Movement {
-  id: string;
-  concept: string;
-  date: string;
-  amount: number;
-  type: 'INGRESO' | 'GASTO' | 'GANANCIA' | 'EGRESO';
-}
-
-export interface Wallet {
-  balance: number;
-  heldBalance: number;
-  currency: string;
-}
-
-export interface AppNotification {
-  id: string;
-  kind: NotificationKind;
-  title: string;
-  detail: string;
-  date: string;
-  icon: string;
-}
+export * from './winup-data.types';
 
 type FetchMode = 'initial' | 'page' | 'background';
 
@@ -171,12 +107,29 @@ export class WinupData {
   }
 
   applyRealtime(event: RealtimeMatchEvent): void {
+    const current = this.matches().find((match) => match.id === event.matchId);
+    if (!current) {
+      return;
+    }
+    const nextStatus =
+      event.status === 'CLOSED'
+        ? 'FINALIZADO'
+        : event.status === 'VOID'
+          ? 'ANULADO'
+          : event.status === 'OPEN'
+            ? event.minute > 0
+              ? 'EN VIVO'
+              : 'PRÓXIMO'
+            : current.status;
+    if (nextStatus !== current.status) {
+      this.fetch(this.page(), PAGE_SIZE, 'background');
+      return;
+    }
     this.matches.update((matches) =>
       matches.map((match) =>
         match.id === event.matchId
           ? {
               ...match,
-              status: event.status === 'CLOSED' ? 'FINALIZADO' : match.status,
               homeScore: event.homeScore,
               awayScore: event.awayScore,
               minute: event.minute,
@@ -241,183 +194,15 @@ export class WinupData {
       .pipe(tap(() => this.refresh()));
   }
 
-  readonly sports = [
-    { name: 'Fútbol', label: 'Fútbol', icon: 'matSportsSoccerOutline' },
-    { name: 'AFL', label: 'AFL', icon: 'matSportsOutline' },
-    { name: 'Béisbol', label: 'Béisbol', icon: 'matSportsBaseballOutline' },
-    { name: 'Baloncesto', label: 'Baloncesto', icon: 'matSportsBasketballOutline' },
-    { name: 'Fórmula 1', label: 'Fórmula 1', icon: 'matSportsMotorsportsOutline' },
-    { name: 'Balonmano', label: 'Balonmano', icon: 'matSportsHandballOutline' },
-    { name: 'Hockey', label: 'Hockey', icon: 'matSportsHockeyOutline' },
-    { name: 'MMA', label: 'MMA', icon: 'matSportsMmaOutline' },
-    { name: 'NBA', label: 'NBA', icon: 'matSportsBasketballOutline' },
-    { name: 'NFL & NCAA', label: 'NFL & NCAA', icon: 'matSportsFootballOutline' },
-    { name: 'Rugby', label: 'Rugby', icon: 'matSportsRugbyOutline' },
-    { name: 'Voleibol', label: 'Voleibol', icon: 'matSportsVolleyballOutline' },
-    { name: 'Tenis', label: 'Tenis', icon: 'matSportsTennisOutline' },
-    { name: 'eSports', label: 'eSports', icon: 'matSportsEsportsOutline' },
-  ];
+  readonly sports = SPORTS;
 
-  readonly matches = signal<Match[]>([
-    {
-      id: 'mci-liv',
-      sport: 'Fútbol',
-      league: 'Premier League',
-      home: 'Manchester City',
-      away: 'Liverpool',
-      homeShort: 'MCI',
-      awayShort: 'LIV',
-      homeScore: 2,
-      awayScore: 1,
-      minute: 68,
-      status: 'EN VIVO',
-      startsAt: 'Hoy, 20:00',
-      odds: { local: 1.65, draw: 3.8, away: 4.2 },
-      drawMarket: true,
-    },
-    {
-      id: 'rma-bar',
-      sport: 'Fútbol',
-      league: 'LaLiga',
-      home: 'Real Madrid',
-      away: 'Barcelona',
-      homeShort: 'RMA',
-      awayShort: 'BAR',
-      homeScore: 1,
-      awayScore: 1,
-      minute: 54,
-      status: 'EN VIVO',
-      startsAt: 'Hoy, 21:00',
-      odds: { local: 2.1, draw: 3.4, away: 3.1 },
-      drawMarket: true,
-    },
-    {
-      id: 'ars-che',
-      sport: 'Fútbol',
-      league: 'Premier League',
-      home: 'Arsenal',
-      away: 'Chelsea',
-      homeShort: 'ARS',
-      awayShort: 'CHE',
-      homeScore: 0,
-      awayScore: 0,
-      minute: 0,
-      status: 'PRÓXIMO',
-      startsAt: 'Hoy, 22:30',
-      odds: { local: 1.9, draw: 3.6, away: 4.1 },
-      drawMarket: true,
-    },
-    {
-      id: 'bay-dor',
-      sport: 'Fútbol',
-      league: 'Bundesliga',
-      home: 'Bayern Múnich',
-      away: 'Borussia Dortmund',
-      homeShort: 'BAY',
-      awayShort: 'BVB',
-      homeScore: 3,
-      awayScore: 2,
-      minute: 90,
-      status: 'FINALIZADO',
-      startsAt: 'Hoy, 18:30',
-      odds: { local: 1.75, draw: 4.0, away: 3.9 },
-      drawMarket: true,
-    },
-  ]);
+  readonly matches = signal<Match[]>(DEMO_MATCHES);
 
-  readonly bets = signal<Bet[]>([
-    {
-      id: 'b-001',
-      matchId: 'mci-liv',
-      match: 'Manchester City vs Liverpool',
-      market: 'Resultado final',
-      selection: 'Manchester City',
-      stake: 50000,
-      odds: 1.65,
-      potential: 82500,
-      status: 'PENDIENTE',
-      placedAt: 'Hoy, 20:12',
-      outcome: null,
-    },
-    {
-      id: 'b-002',
-      matchId: 'rma-bar',
-      match: 'Real Madrid vs Barcelona',
-      market: 'Más de 2.5 goles',
-      selection: 'Más de 2.5',
-      stake: 25000,
-      odds: 1.9,
-      potential: 47500,
-      status: 'GANADA',
-      placedAt: 'Ayer, 21:05',
-      outcome: {
-        winner: 'LOCAL',
-        winnerName: 'Real Madrid',
-        homeScore: 2,
-        awayScore: 1,
-        finished: true,
-      },
-    },
-    {
-      id: 'b-003',
-      matchId: 'ars-che',
-      match: 'Arsenal vs Chelsea',
-      market: 'Resultado final',
-      selection: 'Chelsea',
-      stake: 20000,
-      odds: 3.2,
-      potential: 64000,
-      status: 'PERDIDA',
-      placedAt: 'Ayer, 19:40',
-      outcome: {
-        winner: 'LOCAL',
-        winnerName: 'Arsenal',
-        homeScore: 2,
-        awayScore: 0,
-        finished: true,
-      },
-    },
-  ]);
+  readonly bets = signal<Bet[]>(DEMO_BETS);
 
-  readonly wallet = signal<Wallet>({ balance: 1477500, heldBalance: 0, currency: 'COP' });
+  readonly wallet = signal<Wallet>(DEMO_WALLET);
 
-  readonly movements = signal<Movement[]>([
-    {
-      id: 'mv-001',
-      concept: 'Apuesta Manchester City vs Liverpool',
-      date: 'Hoy, 20:12',
-      amount: -50000,
-      type: 'GASTO',
-    },
-    {
-      id: 'mv-002',
-      concept: 'Ganancia Real Madrid vs Barcelona',
-      date: 'Ayer, 23:10',
-      amount: 47500,
-      type: 'GANANCIA',
-    },
-    {
-      id: 'mv-003',
-      concept: 'Apuesta Arsenal vs Chelsea',
-      date: 'Ayer, 19:40',
-      amount: -20000,
-      type: 'GASTO',
-    },
-    {
-      id: 'mv-004',
-      concept: 'Depósito',
-      date: 'Ayer, 18:00',
-      amount: 500000,
-      type: 'INGRESO',
-    },
-    {
-      id: 'mv-005',
-      concept: 'Saldo inicial',
-      date: '10 nov, 09:00',
-      amount: 1000000,
-      type: 'INGRESO',
-    },
-  ]);
+  readonly movements = signal<Movement[]>(DEMO_MOVEMENTS);
 
   readonly serverNotifications = signal<AppNotification[]>([]);
 

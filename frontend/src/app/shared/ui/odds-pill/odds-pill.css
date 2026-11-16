@@ -38,3 +38,12 @@
   color: var(--on-primary);
   opacity: 0.75;
 }
+
+.odds:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.odds:disabled:hover {
+  border-color: var(--border);
+}

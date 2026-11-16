@@ -3,7 +3,7 @@ import { Bet, WinupData } from '../../../../core/data/winup-data';
 import { EmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { formatCop } from '../../../../shared/money/format-money';
 
-type BetFilter = 'TODAS' | 'PENDIENTE' | 'GANADA' | 'PERDIDA';
+type BetFilter = 'TODAS' | 'PENDIENTE' | 'GANADA' | 'PERDIDA' | 'ANULADA';
 
 @Component({
   selector: 'app-bets-page',
@@ -14,7 +14,7 @@ type BetFilter = 'TODAS' | 'PENDIENTE' | 'GANADA' | 'PERDIDA';
 export class BetsPage {
   readonly data = inject(WinupData);
   readonly filter = signal<BetFilter>('TODAS');
-  readonly tabs: BetFilter[] = ['TODAS', 'PENDIENTE', 'GANADA', 'PERDIDA'];
+  readonly tabs: BetFilter[] = ['TODAS', 'PENDIENTE', 'GANADA', 'PERDIDA', 'ANULADA'];
 
   readonly filtered = computed(() => {
     const value = this.filter();
@@ -35,11 +35,38 @@ export class BetsPage {
 
   readonly money = formatCop;
 
+  tabLabel(tab: BetFilter): string {
+    switch (tab) {
+      case 'PENDIENTE':
+        return 'Pendientes';
+      case 'GANADA':
+        return 'Ganadas';
+      case 'PERDIDA':
+        return 'Perdidas';
+      case 'ANULADA':
+        return 'Anuladas';
+      default:
+        return 'Todas';
+    }
+  }
+
   statusLabel(bet: Bet): string {
-    return bet.status === 'PENDIENTE'
-      ? 'Pendiente'
-      : bet.status === 'GANADA'
-        ? 'Ganada'
-        : 'Perdida';
+    switch (bet.status) {
+      case 'PENDIENTE':
+        return 'Pendiente';
+      case 'GANADA':
+        return 'Ganada';
+      case 'ANULADA':
+        return 'Anulada';
+      default:
+        return 'Perdida';
+    }
+  }
+
+  returnLabel(bet: Bet): string {
+    if (bet.status === 'ANULADA') {
+      return 'Importe devuelto';
+    }
+    return bet.status === 'GANADA' ? 'Ganancia' : 'Retorno potencial';
   }
 }

@@ -1,10 +1,15 @@
 <article class="tile">
   <header class="head">
-    <span class="league">
-      <ng-icon name="lucideTrophy" size="12" />
-      {{ match().league }}
-    </span>
-    @if (match().status === 'EN VIVO') {
+    <div class="head-left">
+      <span class="league">
+        <ng-icon name="lucideTrophy" size="12" />
+        {{ match().league }}
+      </span>
+      <span class="source">{{ sourceLabel() }}</span>
+    </div>
+    @if (match().status === 'ANULADO') {
+      <span class="void">ANULADO</span>
+    } @else if (match().status === 'EN VIVO') {
       <app-live-badge [minute]="match().minute" />
     } @else {
       <span class="time mono">{{ match().startsAt }}</span>
@@ -33,6 +38,7 @@
       label="1"
       [value]="match().odds.local"
       [selected]="selected() === 'LOCAL'"
+      [disabled]="match().status === 'ANULADO'"
       (pick)="pick.emit({ match: match(), selection: 'LOCAL' })"
     />
     @if (match().drawMarket) {
@@ -40,6 +46,7 @@
         label="X"
         [value]="match().odds.draw"
         [selected]="selected() === 'EMPATE'"
+        [disabled]="match().status === 'ANULADO'"
         (pick)="pick.emit({ match: match(), selection: 'EMPATE' })"
       />
     }
@@ -47,6 +54,7 @@
       label="2"
       [value]="match().odds.away"
       [selected]="selected() === 'VISITANTE'"
+      [disabled]="match().status === 'ANULADO'"
       (pick)="pick.emit({ match: match(), selection: 'VISITANTE' })"
     />
   </footer>

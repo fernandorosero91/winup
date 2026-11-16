@@ -207,4 +207,24 @@ describe('WinupData', () => {
     expect(service.matchById(match.id)?.awayScore).toBe(2);
     expect(service.matchById(match.id)?.minute).toBe(74);
   });
+
+  it('refetches the current filter when a match changes status', () => {
+    const upcoming = service.matches().find((match) => match.status === 'PRÓXIMO');
+    if (!upcoming) {
+      throw new Error('No hay partido próximo en los datos de demo');
+    }
+
+    service.applyRealtime({
+      matchId: upcoming.id,
+      status: 'OPEN',
+      home: upcoming.home,
+      away: upcoming.away,
+      homeScore: 1,
+      awayScore: 0,
+      minute: 12,
+      winner: '',
+    });
+
+    expect(api.matches).toHaveBeenCalled();
+  });
 });
