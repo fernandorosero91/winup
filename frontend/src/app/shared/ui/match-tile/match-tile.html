@@ -1,0 +1,53 @@
+<article class="tile">
+  <header class="head">
+    <span class="league">
+      <ng-icon name="lucideTrophy" size="12" />
+      {{ match().league }}
+    </span>
+    @if (match().status === 'EN VIVO') {
+      <app-live-badge [minute]="match().minute" />
+    } @else {
+      <span class="time mono">{{ match().startsAt }}</span>
+    }
+  </header>
+
+  <div class="teams">
+    <div class="team">
+      <span class="crest">{{ match().homeShort }}</span>
+      <span class="name">{{ match().home }}</span>
+      @if (match().status !== 'PRÓXIMO') {
+        <span class="goals mono">{{ match().homeScore }}</span>
+      }
+    </div>
+    <div class="team">
+      <span class="crest">{{ match().awayShort }}</span>
+      <span class="name">{{ match().away }}</span>
+      @if (match().status !== 'PRÓXIMO') {
+        <span class="goals mono">{{ match().awayScore }}</span>
+      }
+    </div>
+  </div>
+
+  <footer class="odds" [class.two-way]="!match().drawMarket">
+    <app-odds-pill
+      label="1"
+      [value]="match().odds.local"
+      [selected]="selected() === 'LOCAL'"
+      (pick)="pick.emit({ match: match(), selection: 'LOCAL' })"
+    />
+    @if (match().drawMarket) {
+      <app-odds-pill
+        label="X"
+        [value]="match().odds.draw"
+        [selected]="selected() === 'EMPATE'"
+        (pick)="pick.emit({ match: match(), selection: 'EMPATE' })"
+      />
+    }
+    <app-odds-pill
+      label="2"
+      [value]="match().odds.away"
+      [selected]="selected() === 'VISITANTE'"
+      (pick)="pick.emit({ match: match(), selection: 'VISITANTE' })"
+    />
+  </footer>
+</article>

@@ -1,0 +1,23 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.dot {
+  width: clamp(5px, 0.4vw, 7px);
+  height: clamp(5px, 0.4vw, 7px);
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.minute {
+  font-size: var(--text-2xs);
+}

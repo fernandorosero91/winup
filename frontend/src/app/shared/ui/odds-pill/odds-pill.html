@@ -1,0 +1,4 @@
+<button type="button" class="odds" [class.is-selected]="selected()" (click)="pick.emit()">
+  <span class="label">{{ label() }}</span>
+  <span class="value mono">{{ value().toFixed(2) }}</span>
+</button>
