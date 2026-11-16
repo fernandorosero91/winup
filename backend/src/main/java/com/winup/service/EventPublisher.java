@@ -3,6 +3,7 @@ package com.winup.service;
 import com.winup.config.RabbitConfig;
 import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.service.outbox.OutboxWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,13 +28,17 @@ public class EventPublisher {
     }
 
     public void matchCreated(MatchEntity match) {
+        publishMatchCreated(match);
+        scheduleSimulation(match);
+    }
+
+    public void publishMatchCreated(MatchEntity match) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("matchId", match.getId().toString());
         payload.put("league", match.getLeague());
         payload.put("home", match.getHomeTeam());
         payload.put("away", match.getAwayTeam());
         sendKafka("MATCH_CREATED", match.getId(), payload);
-        scheduleSimulation(match);
     }
 
     public void scheduleSimulation(MatchEntity match) {
@@ -72,7 +77,7 @@ public class EventPublisher {
         sendKafka("MATCH_FINISHED", match.getId(), payload);
     }
 
-    public void notifyDashboard(String status, MatchEntity match, String winner) {
+    public void notifyDashboard(MatchStatus status, MatchEntity match, String winner) {
         notifyDashboard(
                 status,
                 match.getId().toString(),
@@ -86,7 +91,7 @@ public class EventPublisher {
     }
 
     public void notifyDashboard(
-            String status,
+            MatchStatus status,
             String matchId,
             String home,
             String away,
@@ -97,7 +102,7 @@ public class EventPublisher {
     ) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("matchId", matchId);
-        payload.put("status", status);
+        payload.put("status", status.code());
         payload.put("home", home);
         payload.put("away", away);
         payload.put("homeScore", homeScore);

@@ -3,6 +3,7 @@ package com.winup.service.messaging;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.winup.config.RabbitConfig;
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.repository.MatchRepository;
 import com.winup.service.EventPublisher;
 import com.winup.service.MatchResultSimulator;
@@ -41,7 +42,11 @@ public class SimulationConsumer {
         }
         UUID matchId = UUID.fromString(matchIdValue.toString());
         MatchEntity match = matchRepository.findById(matchId).orElse(null);
-        if (match == null || "CLOSED".equals(match.getStatus())) {
+        if (match == null) {
+            return;
+        }
+        MatchStatus status = MatchStatus.from(match.getStatus());
+        if (status == MatchStatus.CLOSED || status == MatchStatus.VOID) {
             return;
         }
 

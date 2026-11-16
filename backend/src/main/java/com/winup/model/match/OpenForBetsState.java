@@ -1,4 +1,6 @@
 package com.winup.model.match;
+import com.winup.model.vo.MatchResult;
+
 
 public final class OpenForBetsState implements MatchState {
     @Override

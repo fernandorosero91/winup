@@ -1,8 +1,8 @@
 package com.winup.service.engine;
 
 import com.winup.model.match.MatchAggregate;
-import com.winup.model.match.MatchId;
-import com.winup.model.match.MatchResult;
+import com.winup.model.vo.MatchId;
+import com.winup.model.vo.MatchResult;
 import com.winup.model.match.PayoutStrategy;
 import com.winup.model.match.SettlementLine;
 

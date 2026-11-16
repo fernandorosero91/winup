@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.model.SportCatalog;
 import com.winup.repository.MatchRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,7 +82,11 @@ public class GeneratorService {
     }
 
     private long countLive(String sport) {
-        return matchRepository.countBySportAndStatusAndMinuteGreaterThan(sport, "OPEN", 0);
+        return matchRepository.countBySportAndStatusAndMinuteGreaterThan(
+                sport,
+                MatchStatus.OPEN.code(),
+                0
+        );
     }
 
     private void publishNewMatch(String sport) {

@@ -1,4 +1,8 @@
 package com.winup.model.match;
+import com.winup.model.vo.Dinero;
+import com.winup.model.vo.MatchId;
+import com.winup.model.vo.MatchResult;
+
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

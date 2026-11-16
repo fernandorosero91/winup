@@ -1,12 +1,12 @@
 package com.winup.service.engine;
 
 import com.winup.model.match.Bet;
-import com.winup.model.match.BetId;
+import com.winup.model.vo.BetId;
 import com.winup.model.match.DecimalPayoutStrategy;
-import com.winup.model.match.Dinero;
-import com.winup.model.match.MatchId;
-import com.winup.model.match.MatchResult;
-import com.winup.model.match.UserId;
+import com.winup.model.vo.Dinero;
+import com.winup.model.vo.MatchId;
+import com.winup.model.vo.MatchResult;
+import com.winup.model.vo.UserId;
 import com.winup.model.vo.BetSelection;
 import org.junit.jupiter.api.Test;
 

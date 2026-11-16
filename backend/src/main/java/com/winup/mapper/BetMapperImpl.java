@@ -4,6 +4,8 @@ import com.winup.dto.BetDto;
 import com.winup.dto.BetOutcomeDto;
 import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
+import com.winup.model.BetStatus;
+import com.winup.model.MatchStatus;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -18,6 +20,7 @@ public class BetMapperImpl implements BetMapper {
 
     @Override
     public BetDto toDto(BetEntity bet, MatchEntity match) {
+        BetStatus status = BetStatus.from(bet.getStatus());
         return new BetDto(
                 bet.getId(),
                 matchName(match),
@@ -25,8 +28,8 @@ public class BetMapperImpl implements BetMapper {
                 selectionName(bet, match),
                 bet.getStake(),
                 bet.getOdds(),
-                potential(bet),
-                status(bet),
+                potential(bet, status),
+                status.label(),
                 TIME.format(bet.getCreatedAt()),
                 outcome(match)
         );
@@ -46,16 +49,11 @@ public class BetMapperImpl implements BetMapper {
         return "Empate";
     }
 
-    private BigDecimal potential(BetEntity bet) {
+    private BigDecimal potential(BetEntity bet, BetStatus status) {
+        if (status.refunded()) {
+            return bet.getStake().setScale(2, RoundingMode.HALF_EVEN);
+        }
         return bet.getStake().multiply(bet.getOdds()).setScale(2, RoundingMode.HALF_EVEN);
-    }
-
-    private String status(BetEntity bet) {
-        return switch (bet.getStatus()) {
-            case "WON" -> "GANADA";
-            case "LOST" -> "PERDIDA";
-            default -> "PENDIENTE";
-        };
     }
 
     private BetOutcomeDto outcome(MatchEntity match) {
@@ -68,7 +66,7 @@ public class BetMapperImpl implements BetMapper {
                 winnerName(match, winner),
                 match.getHomeScore(),
                 match.getAwayScore(),
-                "CLOSED".equals(match.getStatus())
+                MatchStatus.from(match.getStatus()) == MatchStatus.CLOSED
         );
     }
 

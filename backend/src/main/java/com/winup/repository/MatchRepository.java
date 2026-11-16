@@ -52,6 +52,7 @@ public interface MatchRepository extends JpaRepository<MatchEntity, UUID> {
                 or (:status = 'EN VIVO' and m.status = 'OPEN' and m.minute > 0)
                 or (:status = 'PRÓXIMO' and m.status = 'OPEN' and m.minute = 0)
                 or (:status = 'FINALIZADO' and m.status = 'CLOSED')
+                or (:status = 'ANULADO' and m.status = 'VOID')
               )
             """)
     Page<MatchEntity> search(

@@ -1,6 +1,7 @@
 package com.winup.service;
 
 import com.winup.entity.MatchEntity;
+import com.winup.model.MatchStatus;
 import com.winup.model.SportCatalog;
 import com.winup.dto.DtoMapper;
 import com.winup.dto.MatchPageDto;
@@ -64,9 +65,17 @@ public class MatchService {
         return SportCatalog.SPORTS.stream()
                 .map(sport -> new SportSummaryDto(
                         sport,
-                        matchRepository.countBySportAndStatusAndMinuteGreaterThan(sport, "OPEN", 0),
-                        matchRepository.countBySportAndStatusAndMinute(sport, "OPEN", 0),
-                        matchRepository.countBySportAndStatus(sport, "CLOSED"),
+                        matchRepository.countBySportAndStatusAndMinuteGreaterThan(
+                                sport,
+                                MatchStatus.OPEN.code(),
+                                0
+                        ),
+                        matchRepository.countBySportAndStatusAndMinute(
+                                sport,
+                                MatchStatus.OPEN.code(),
+                                0
+                        ),
+                        matchRepository.countBySportAndStatus(sport, MatchStatus.CLOSED.code()),
                         matchRepository.countBySport(sport)
                 ))
                 .toList();
@@ -84,8 +93,13 @@ public class MatchService {
                 || "UPCOMING".equalsIgnoreCase(status)) {
             return "PRÓXIMO";
         }
-        if ("FINALIZADO".equalsIgnoreCase(status) || "FINISHED".equalsIgnoreCase(status)) {
+        if ("FINALIZADO".equalsIgnoreCase(status)
+                || "FINISHED".equalsIgnoreCase(status)
+                || MatchStatus.CLOSED.code().equalsIgnoreCase(status)) {
             return "FINALIZADO";
+        }
+        if ("ANULADO".equalsIgnoreCase(status) || MatchStatus.VOID.code().equalsIgnoreCase(status)) {
+            return "ANULADO";
         }
         return "TODOS";
     }
@@ -95,17 +109,18 @@ public class MatchService {
     }
 
     public long activeCount() {
-        return matchRepository.countByStatus("OPEN");
+        return matchRepository.countByStatus(MatchStatus.OPEN.code());
     }
 
     @Transactional
     public MatchEntity finish(UUID id, String winner, int homeScore, int awayScore) {
         MatchEntity match = matchRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Partido no encontrado"));
-        if ("CLOSED".equals(match.getStatus())) {
+        MatchStatus current = MatchStatus.from(match.getStatus());
+        if (current == MatchStatus.CLOSED || current == MatchStatus.VOID) {
             return match;
         }
-        match.setStatus("CLOSED");
+        match.setStatus(MatchStatus.CLOSED.code());
         match.setWinner(winner);
         match.setHomeScore(homeScore);
         match.setAwayScore(awayScore);

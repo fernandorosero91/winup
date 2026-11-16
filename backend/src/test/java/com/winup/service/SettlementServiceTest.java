@@ -3,6 +3,7 @@ package com.winup.service;
 import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
 import com.winup.entity.WalletEntity;
+import com.winup.model.MatchStatus;
 import com.winup.model.match.DecimalPayoutStrategy;
 import com.winup.repository.BetRepository;
 import com.winup.repository.MatchRepository;
@@ -14,6 +15,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,7 +82,7 @@ class SettlementServiceTest {
         assertThat(match.getWinner()).isEqualTo("LOCAL");
         assertThat(bet.getStatus()).isEqualTo("LOST");
         verify(eventPublisher).notifyEmailLoss(bet, match);
-        verify(eventPublisher).notifyDashboard(eq("CLOSED"), eq(match), eq("LOCAL"));
+        verify(eventPublisher).notifyDashboard(eq(MatchStatus.CLOSED), eq(match), eq("LOCAL"));
     }
 
     @Test
@@ -92,6 +97,68 @@ class SettlementServiceTest {
         verify(eventPublisher, never()).notifyDashboard(any(), any(), any());
     }
 
+    @Test
+    void should_void_pending_bets_and_refund_the_stake() {
+        MatchEntity match = match(null);
+        match.setStatus("OPEN");
+        BetEntity bet = bet("LOCAL", "1000.00", "2.00");
+        WalletEntity wallet = new WalletEntity();
+        wallet.setUserId("user-1");
+        wallet.setBalance(new BigDecimal("5000.00"));
+
+        when(matchRepository.findById(match.getId())).thenReturn(Optional.of(match));
+        when(betRepository.findByMatchIdAndStatus(match.getId(), "PENDING")).thenReturn(List.of(bet));
+        when(walletRepository.findWithLockByUserId("user-1")).thenReturn(Optional.of(wallet));
+
+        assertThat(service().voidMatch(match.getId())).isTrue();
+
+        assertThat(match.getStatus()).isEqualTo("VOID");
+        assertThat(bet.getStatus()).isEqualTo("VOID");
+        assertThat(bet.getPayout()).isEqualByComparingTo("1000.00");
+        assertThat(wallet.getBalance()).isEqualByComparingTo("6000.00");
+        verify(movementRepository).save(any());
+        verify(eventPublisher).notifyDashboard(MatchStatus.VOID, match, null);
+    }
+
+    @Test
+    void should_not_void_a_closed_match() {
+        MatchEntity match = match("LOCAL");
+
+        when(matchRepository.findById(match.getId())).thenReturn(Optional.of(match));
+
+        assertThat(service().voidMatch(match.getId())).isFalse();
+
+        assertThat(match.getStatus()).isEqualTo("CLOSED");
+        verify(matchRepository, never()).save(match);
+        verify(betRepository, never()).findByMatchIdAndStatus(any(), any());
+    }
+
+    @Test
+    void should_not_void_a_match_twice() {
+        MatchEntity match = match(null);
+        match.setStatus("VOID");
+
+        when(matchRepository.findById(match.getId())).thenReturn(Optional.of(match));
+
+        assertThat(service().voidMatch(match.getId())).isFalse();
+
+        verify(betRepository, never()).findByMatchIdAndStatus(any(), any());
+    }
+
+    @Test
+    void should_ignore_settlement_for_a_void_match() {
+        MatchEntity match = match(null);
+        match.setStatus("VOID");
+
+        when(matchRepository.findById(match.getId())).thenReturn(Optional.of(match));
+
+        service().settle(match.getId(), "LOCAL", 2, 1);
+
+        verify(matchRepository, never()).save(match);
+        verify(betRepository, never()).findByMatchIdAndStatus(any(), any());
+        verify(eventPublisher, never()).notifyDashboard(any(), any(), isNull());
+    }
+
     private SettlementService service() {
         return new SettlementService(
                 matchRepository,
@@ -99,7 +166,8 @@ class SettlementServiceTest {
                 walletRepository,
                 movementRepository,
                 eventPublisher,
-                new DecimalPayoutStrategy()
+                new DecimalPayoutStrategy(),
+                Clock.fixed(Instant.parse("2026-11-16T12:00:00Z"), ZoneOffset.UTC)
         );
     }
 

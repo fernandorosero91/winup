@@ -1,4 +1,10 @@
 package com.winup.model.match;
+import com.winup.model.vo.BetId;
+import com.winup.model.vo.Dinero;
+import com.winup.model.vo.MatchId;
+import com.winup.model.vo.MatchResult;
+import com.winup.model.vo.UserId;
+
 
 import com.winup.exception.BettingClosedException;
 import com.winup.model.vo.BetSelection;

@@ -1,4 +1,6 @@
 package com.winup.model.match;
+import com.winup.model.vo.Dinero;
+
 
 import org.junit.jupiter.api.Test;
 

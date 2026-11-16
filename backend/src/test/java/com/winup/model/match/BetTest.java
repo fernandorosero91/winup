@@ -1,4 +1,8 @@
 package com.winup.model.match;
+import com.winup.model.vo.BetId;
+import com.winup.model.vo.Dinero;
+import com.winup.model.vo.UserId;
+
 
 import com.winup.model.vo.BetSelection;
 import org.junit.jupiter.api.Test;

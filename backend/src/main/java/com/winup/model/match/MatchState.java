@@ -1,4 +1,6 @@
 package com.winup.model.match;
+import com.winup.model.vo.MatchResult;
+
 
 import com.winup.exception.BettingClosedException;
 

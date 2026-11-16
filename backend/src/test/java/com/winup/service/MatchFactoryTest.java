@@ -4,10 +4,17 @@ import com.winup.entity.MatchEntity;
 import com.winup.model.SportCatalog;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MatchFactoryTest {
-    private final MatchFactory factory = new MatchFactory();
+    private final MatchFactory factory = new MatchFactory(
+            new LeagueCatalog(),
+            Clock.fixed(Instant.parse("2026-11-16T12:00:00Z"), ZoneOffset.UTC)
+    );
 
     @Test
     void should_create_a_match_for_a_specific_sport() {

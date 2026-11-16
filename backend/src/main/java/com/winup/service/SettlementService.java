@@ -4,7 +4,9 @@ import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
 import com.winup.entity.MovementEntity;
 import com.winup.entity.WalletEntity;
-import com.winup.model.match.Dinero;
+import com.winup.model.BetStatus;
+import com.winup.model.MatchStatus;
+import com.winup.model.vo.Dinero;
 import com.winup.model.match.PayoutStrategy;
 import com.winup.repository.BetRepository;
 import com.winup.repository.MatchRepository;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -26,6 +29,7 @@ public class SettlementService {
     private final MovementRepository movementRepository;
     private final EventPublisher eventPublisher;
     private final PayoutStrategy payoutStrategy;
+    private final Clock clock;
 
     public SettlementService(
             MatchRepository matchRepository,
@@ -33,7 +37,8 @@ public class SettlementService {
             WalletRepository walletRepository,
             MovementRepository movementRepository,
             EventPublisher eventPublisher,
-            PayoutStrategy payoutStrategy
+            PayoutStrategy payoutStrategy,
+            Clock clock
     ) {
         this.matchRepository = matchRepository;
         this.betRepository = betRepository;
@@ -41,23 +46,25 @@ public class SettlementService {
         this.movementRepository = movementRepository;
         this.eventPublisher = eventPublisher;
         this.payoutStrategy = payoutStrategy;
+        this.clock = clock;
     }
 
     @Transactional
     public void settle(UUID matchId, String winner, int homeScore, int awayScore) {
         MatchEntity match = matchRepository.findById(matchId).orElse(null);
-        if (match == null) {
+        if (match == null || MatchStatus.from(match.getStatus()) == MatchStatus.VOID) {
             return;
         }
 
-        boolean closedNow = !"CLOSED".equals(match.getStatus());
+        Instant now = clock.instant();
+        boolean closedNow = MatchStatus.from(match.getStatus()) != MatchStatus.CLOSED;
         if (closedNow) {
-            match.setStatus("CLOSED");
+            match.setStatus(MatchStatus.CLOSED.code());
             match.setWinner(winner);
             match.setHomeScore(homeScore);
             match.setAwayScore(awayScore);
             match.setMinute(90);
-            match.setUpdatedAt(Instant.now());
+            match.setUpdatedAt(now);
             matchRepository.save(match);
         } else if (match.getWinner() == null) {
             match.setWinner(winner);
@@ -67,27 +74,56 @@ public class SettlementService {
         }
 
         String resultWinner = match.getWinner() == null ? winner : match.getWinner();
-        settlePendingBets(match, resultWinner);
+        settlePendingBets(match, resultWinner, now);
 
         if (closedNow) {
-            eventPublisher.notifyDashboard("CLOSED", match, resultWinner);
+            eventPublisher.notifyDashboard(MatchStatus.CLOSED, match, resultWinner);
         }
     }
 
-    private void settlePendingBets(MatchEntity match, String winner) {
-        for (BetEntity bet : betRepository.findByMatchIdAndStatus(match.getId(), "PENDING")) {
+    @Transactional
+    public boolean voidMatch(UUID matchId) {
+        MatchEntity match = matchRepository.findById(matchId).orElse(null);
+        if (match == null) {
+            return false;
+        }
+        MatchStatus status = MatchStatus.from(match.getStatus());
+        if (status == MatchStatus.CLOSED || status == MatchStatus.VOID) {
+            return false;
+        }
+
+        Instant now = clock.instant();
+        match.setStatus(MatchStatus.VOID.code());
+        match.setWinner(null);
+        match.setMinute(0);
+        match.setUpdatedAt(now);
+        matchRepository.save(match);
+
+        for (BetEntity bet : betRepository.findByMatchIdAndStatus(match.getId(), BetStatus.PENDING.code())) {
+            bet.setStatus(BetStatus.VOID.code());
+            bet.setPayout(bet.getStake());
+            bet.setSettledAt(now);
+            refund(bet, match, now);
+            betRepository.save(bet);
+        }
+        eventPublisher.notifyDashboard(MatchStatus.VOID, match, null);
+        return true;
+    }
+
+    private void settlePendingBets(MatchEntity match, String winner, Instant now) {
+        for (BetEntity bet : betRepository.findByMatchIdAndStatus(match.getId(), BetStatus.PENDING.code())) {
             boolean won = bet.getSelection().equals(winner);
-            bet.setSettledAt(Instant.now());
+            bet.setSettledAt(now);
             if (won) {
                 BigDecimal payout = payoutStrategy
                         .calcular(new Dinero(bet.getStake()), bet.getOdds())
                         .amount();
-                bet.setStatus("WON");
+                bet.setStatus(BetStatus.WON.code());
                 bet.setPayout(payout);
-                credit(bet, match, payout);
+                credit(bet, match, payout, now);
                 eventPublisher.notifyEmailWin(bet, match, payout);
             } else {
-                bet.setStatus("LOST");
+                bet.setStatus(BetStatus.LOST.code());
                 bet.setPayout(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_EVEN));
                 eventPublisher.notifyEmailLoss(bet, match);
             }
@@ -95,7 +131,7 @@ public class SettlementService {
         }
     }
 
-    private void credit(BetEntity bet, MatchEntity match, BigDecimal payout) {
+    private void credit(BetEntity bet, MatchEntity match, BigDecimal payout, Instant now) {
         WalletEntity wallet = walletRepository.findWithLockByUserId(bet.getUserId()).orElse(null);
         if (wallet == null) {
             return;
@@ -103,13 +139,35 @@ public class SettlementService {
         wallet.setBalance(wallet.getBalance().add(payout).setScale(2, RoundingMode.HALF_EVEN));
         walletRepository.save(wallet);
 
+        movement(bet, match, payout, "GANANCIA", "Ganancia ", now);
+    }
+
+    private void refund(BetEntity bet, MatchEntity match, Instant now) {
+        WalletEntity wallet = walletRepository.findWithLockByUserId(bet.getUserId()).orElse(null);
+        if (wallet == null) {
+            return;
+        }
+        wallet.setBalance(wallet.getBalance().add(bet.getStake()).setScale(2, RoundingMode.HALF_EVEN));
+        walletRepository.save(wallet);
+
+        movement(bet, match, bet.getStake(), "REEMBOLSO", "Reembolso ", now);
+    }
+
+    private void movement(
+            BetEntity bet,
+            MatchEntity match,
+            BigDecimal amount,
+            String type,
+            String prefix,
+            Instant now
+    ) {
         MovementEntity movement = new MovementEntity();
         movement.setId(UUID.randomUUID());
         movement.setUserId(bet.getUserId());
-        movement.setConcept("Ganancia " + match.getHomeTeam() + " vs " + match.getAwayTeam());
-        movement.setAmount(payout);
-        movement.setType("GANANCIA");
-        movement.setCreatedAt(Instant.now());
+        movement.setConcept(prefix + match.getHomeTeam() + " vs " + match.getAwayTeam());
+        movement.setAmount(amount);
+        movement.setType(type);
+        movement.setCreatedAt(now);
         movementRepository.save(movement);
     }
 }

@@ -55,6 +55,19 @@ class BetMapperImplTest {
     }
 
     @Test
+    void should_map_a_void_bet_as_anulada_and_show_the_refund() {
+        MatchEntity match = match("Equipo A", "Equipo B", "VOID", null, 0, 0);
+        BetEntity bet = bet("LOCAL", "VOID", "2.00");
+        bet.setPayout(new BigDecimal("100.00"));
+
+        BetDto dto = new BetMapperImpl().toDto(bet, match);
+
+        assertThat(dto.status()).isEqualTo("ANULADA");
+        assertThat(dto.potential()).isEqualByComparingTo("100.00");
+        assertThat(dto.outcome().finished()).isFalse();
+    }
+
+    @Test
     void should_not_break_when_the_match_is_missing() {
         BetEntity bet = bet("LOCAL", "PENDING", "2.00");
 

@@ -3,6 +3,7 @@ package com.winup.service.provider.random;
 import com.winup.entity.MatchEntity;
 import com.winup.model.SportCatalog;
 import com.winup.repository.MatchRepository;
+import com.winup.service.LeagueCatalog;
 import com.winup.service.MatchFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +27,7 @@ class RandomAdapterTest {
     @Test
     void should_generate_three_hundred_simulated_matches_for_all_sports() {
         when(matchRepository.count()).thenReturn(0L);
-        RandomAdapter adapter = new RandomAdapter(matchRepository, new MatchFactory(), 2026L, 300);
+        RandomAdapter adapter = new RandomAdapter(matchRepository, new MatchFactory(new LeagueCatalog(), java.time.Clock.systemUTC()), 2026L, 300);
 
         int seeded = adapter.seed(300);
 
@@ -46,8 +47,8 @@ class RandomAdapterTest {
     @Test
     void should_generate_the_same_catalog_with_the_same_seed() {
         when(matchRepository.count()).thenReturn(0L);
-        RandomAdapter first = new RandomAdapter(matchRepository, new MatchFactory(), 2026L, 30);
-        RandomAdapter second = new RandomAdapter(matchRepository, new MatchFactory(), 2026L, 30);
+        RandomAdapter first = new RandomAdapter(matchRepository, new MatchFactory(new LeagueCatalog(), java.time.Clock.systemUTC()), 2026L, 30);
+        RandomAdapter second = new RandomAdapter(matchRepository, new MatchFactory(new LeagueCatalog(), java.time.Clock.systemUTC()), 2026L, 30);
 
         first.seed(30);
         second.seed(30);
@@ -63,7 +64,7 @@ class RandomAdapterTest {
     @Test
     void should_not_seed_when_database_already_has_enough_matches() {
         when(matchRepository.count()).thenReturn(300L);
-        RandomAdapter adapter = new RandomAdapter(matchRepository, new MatchFactory(), 2026L, 300);
+        RandomAdapter adapter = new RandomAdapter(matchRepository, new MatchFactory(new LeagueCatalog(), java.time.Clock.systemUTC()), 2026L, 300);
 
         int seeded = adapter.seed(300);
 
@@ -73,7 +74,7 @@ class RandomAdapterTest {
 
     @Test
     void should_seed_extra_matches_even_when_database_has_data() {
-        RandomAdapter adapter = new RandomAdapter(matchRepository, new MatchFactory(), 2026L, 300);
+        RandomAdapter adapter = new RandomAdapter(matchRepository, new MatchFactory(new LeagueCatalog(), java.time.Clock.systemUTC()), 2026L, 300);
 
         int seeded = adapter.seedExtra(30);
 

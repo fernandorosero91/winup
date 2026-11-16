@@ -70,6 +70,17 @@ class MatchServiceTest {
     }
 
     @Test
+    void should_normalize_void_status_to_anulado() {
+        when(matchRepository.search(any(), any(), any())).thenReturn(Page.empty());
+
+        matchService.page("VOID", "TODOS", 0, 6);
+
+        ArgumentCaptor<String> status = ArgumentCaptor.forClass(String.class);
+        verify(matchRepository).search(status.capture(), any(), any());
+        assertThat(status.getValue()).isEqualTo("ANULADO");
+    }
+
+    @Test
     void should_clamp_page_and_size_to_safe_limits() {
         when(matchRepository.search(any(), any(), any())).thenReturn(Page.empty());
 
