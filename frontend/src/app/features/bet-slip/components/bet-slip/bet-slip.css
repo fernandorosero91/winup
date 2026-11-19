@@ -1,14 +1,24 @@
-.slip {
+:host {
   position: sticky;
   top: clamp(78px, 6vw, 104px);
+  display: block;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.slip {
   display: flex;
+  max-height: calc(100dvh - clamp(78px, 6vw, 104px) - var(--space-5));
   flex-direction: column;
   gap: var(--space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--card-pad);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-card);
+  scrollbar-width: thin;
 }
 
 .slip-head {
@@ -234,7 +244,13 @@ label {
 }
 
 @media (max-width: 1024px) {
-  .slip {
+  :host {
     position: static;
+    display: block;
+  }
+
+  .slip {
+    max-height: none;
+    overflow: visible;
   }
 }
