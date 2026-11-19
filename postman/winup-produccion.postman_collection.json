@@ -1,0 +1,1291 @@
+{
+  "info": {
+    "name": "WINUP · Producción",
+    "description": "Colección para probar la API de WINUP en https://winup.site. Importable en Postman y Thunder Client. Flujo recomendado: salud, registro o login, listar partidos, crear apuesta, cartera, pagos, notificaciones y administración.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "8f1c2b40-6a4e-4f62-9d3a-1c5b7e9a2d10"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const isPostman = typeof pm !== 'undefined';",
+          "const isThunder = typeof tc !== 'undefined';",
+          "",
+          "let body = null;",
+          "try {",
+          "  body = isPostman ? pm.response.json() : (isThunder ? tc.response.json : null);",
+          "} catch (error) {",
+          "  body = null;",
+          "}",
+          "",
+          "const save = (key, value) => {",
+          "  if (value === undefined || value === null || value === '') {",
+          "    return;",
+          "  }",
+          "  if (isPostman) {",
+          "    if (pm.environment.name) {",
+          "      pm.environment.set(key, value);",
+          "    }",
+          "    pm.collectionVariables.set(key, value);",
+          "  } else if (isThunder) {",
+          "    tc.setVar(key, value);",
+          "  }",
+          "};",
+          "",
+          "if (isPostman) {",
+          "  pm.test('Respuesta correcta', () => pm.response.to.be.success);",
+          "} else if (isThunder) {",
+          "  tc.test('Respuesta correcta', () => tc.response.status >= 200 && tc.response.status < 300);",
+          "}",
+          "",
+          "if (body !== null) {",
+          "  if (body.token) {",
+          "    save('token', body.token);",
+          "    save('userId', body.user && body.user.id);",
+          "  }",
+          "",
+          "  if (Array.isArray(body.items)) {",
+          "    const match = body.items.find((item) => item.status === 'OPEN') || body.items[0];",
+          "    if (match) {",
+          "      save('matchId', match.id);",
+          "    }",
+          "  }",
+          "",
+          "  if (isPostman) {",
+          "    const name = pm.info.requestName;",
+          "    if (name === 'Crear apuesta') {",
+          "      save('betId', body.id);",
+          "    }",
+          "    if (name === 'Crear depósito') {",
+          "      save('depositId', body.id);",
+          "      save('checkoutUrl', body.checkoutUrl);",
+          "    }",
+          "    if (name === 'Crear retiro') {",
+          "      save('withdrawalId', body.id);",
+          "    }",
+          "    if (name === 'Listar notificaciones' && Array.isArray(body) && body.length > 0) {",
+          "      save('notificationId', body[0].id);",
+          "    }",
+          "    if (name === 'Crear promoción') {",
+          "      save('promoId', body.id);",
+          "    }",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://winup.site/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "prueba.winup@ejemplo.com",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "Winup2026",
+      "type": "string"
+    },
+    {
+      "key": "displayName",
+      "value": "Prueba WINUP",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "matchId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "betId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "depositId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutUrl",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "withdrawalId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "promoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "deviceToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyBet",
+      "value": "apuesta-demo-1",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyDeposit",
+      "value": "deposito-demo-1",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyWithdrawal",
+      "value": "retiro-demo-1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Salud",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Estado del backend y número de partidos. No requiere token.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Proveedores deportivos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "providers"
+              ]
+            },
+            "description": "Cuota y estado de los proveedores deportivos. No requiere token.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 · Cuenta",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"{{displayName}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Crea una cuenta nueva. El correo debe ser único. La contraseña debe tener entre 8 y 72 caracteres, con al menos una letra y un número. Guarda token y userId automáticamente en Postman.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Iniciar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesión con una cuenta existente. Guarda token y userId automáticamente en Postman.",
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "Datos de la cuenta autenticada."
+          }
+        },
+        {
+          "name": "Cerrar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Cierra la sesión en el servidor. El token sigue siendo válido hasta su expiración; bórralo de la variable token si quiere invalidarlo en el cliente."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Partidos",
+      "item": [
+        {
+          "name": "Listar partidos en vivo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/matches?status=EN%20VIVO&sport=TODOS&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "EN VIVO"
+                },
+                {
+                  "key": "sport",
+                  "value": "TODOS"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Partidos en vivo. En Postman guarda automáticamente el id del primer partido OPEN en matchId. Si el primer resultado no admite apuestas, pruebe con otro status o copie un id manualmente."
+          }
+        },
+        {
+          "name": "Listar todos los partidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/matches?status=TODOS&sport=TODOS&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "matches"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "TODOS"
+                },
+                {
+                  "key": "sport",
+                  "value": "TODOS"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Listado paginado. Tamaño máximo 50. También guarda el primer partido OPEN en matchId."
+          }
+        },
+        {
+          "name": "Detalle de partido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/matches/{{matchId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "matches",
+                "{{matchId}}"
+              ]
+            },
+            "description": "Detalle de un partido. Requiere matchId."
+          }
+        },
+        {
+          "name": "Deportes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sports"
+              ]
+            },
+            "description": "Resumen de partidos por deporte."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Apuestas y cartera",
+      "item": [
+        {
+          "name": "Crear apuesta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyBet}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matchId\": \"{{matchId}}\",\n  \"selection\": \"LOCAL\",\n  \"stake\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bets"
+              ]
+            },
+            "description": "Registra una apuesta. Requiere un partido OPEN y saldo. selection: LOCAL, EMPATE o VISITANTE. El empate no existe en baloncesto, tenis, eSports, béisbol, voleibol, Fórmula 1 ni MMA. stake entre 500 y 500.000 COP. Cambie idempotencyBet para crear una apuesta nueva; con la misma clave devuelve la apuesta anterior."
+          }
+        },
+        {
+          "name": "Mis apuestas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bets"
+              ]
+            },
+            "description": "Apuestas de la cuenta autenticada, de la más reciente a la más antigua."
+          }
+        },
+        {
+          "name": "Cartera",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet"
+              ]
+            },
+            "description": "Saldo disponible, saldo retenido y movimientos recientes."
+          }
+        },
+        {
+          "name": "Resumen de cartera",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "summary"
+              ]
+            },
+            "description": "Ingresos, gastos y cantidad de movimientos."
+          }
+        },
+        {
+          "name": "Movimientos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/movements?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "movements"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Movimientos de cartera paginados."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Pagos y retiros",
+      "item": [
+        {
+          "name": "Crear depósito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyDeposit}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"50000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "deposits"
+              ]
+            },
+            "description": "Crea una intención de depósito entre 5.000 y 500.000 COP. En producción el proveedor es MercadoPago: la respuesta trae checkoutUrl para pagar. Guarda depositId y checkoutUrl en Postman. Cambie idempotencyDeposit para un depósito nuevo."
+          }
+        },
+        {
+          "name": "Consultar depósito",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/intents/{{depositId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "intents",
+                "{{depositId}}"
+              ]
+            },
+            "description": "Estado de la intención de depósito. Requiere depositId."
+          }
+        },
+        {
+          "name": "Crear retiro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyWithdrawal}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"10000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "withdrawals"
+              ]
+            },
+            "description": "Solicita un retiro entre 5.000 y 500.000 COP. Si supera el umbral de aprobación (200.000 COP por defecto) queda PENDING_APPROVAL y necesita aprobación de un administrador. Guarda withdrawalId en Postman."
+          }
+        },
+        {
+          "name": "Mis retiros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "withdrawals"
+              ]
+            },
+            "description": "Retiros de la cuenta autenticada."
+          }
+        },
+        {
+          "name": "Detalle de retiro",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/withdrawals/{{withdrawalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "withdrawals",
+                "{{withdrawalId}}"
+              ]
+            },
+            "description": "Estado de un retiro. Requiere withdrawalId."
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Notificaciones y dispositivos",
+      "item": [
+        {
+          "name": "Listar notificaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            },
+            "description": "Bandeja de notificaciones, incluidas las promociones globales. En Postman guarda el id de la primera en notificationId."
+          }
+        },
+        {
+          "name": "Marcar notificación como leída",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"{{notificationId}}\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read"
+              ]
+            },
+            "description": "Marca una o varias notificaciones como leídas. Requiere notificationId."
+          }
+        },
+        {
+          "name": "Limpiar notificaciones",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            },
+            "description": "Vacía la bandeja de la cuenta autenticada."
+          }
+        },
+        {
+          "name": "Registrar dispositivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{deviceToken}}\",\n  \"platform\": \"android\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/devices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "devices"
+              ]
+            },
+            "description": "Registra un token FCM para notificaciones push. Requiere un token real del dispositivo Android."
+          }
+        },
+        {
+          "name": "Eliminar dispositivo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/devices/{{deviceToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "devices",
+                "{{deviceToken}}"
+              ]
+            },
+            "description": "Elimina un token FCM registrado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Administración",
+      "item": [
+        {
+          "name": "Resumen administrativo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Totales de usuarios, partidos, apuestas, pagos y ledger. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            },
+            "description": "Listado de usuarios. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Partidos administrativos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/matches/page?page=0&size=10&status=TODOS&sport=TODOS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "matches",
+                "page"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "TODOS"
+                },
+                {
+                  "key": "sport",
+                  "value": "TODOS"
+                }
+              ]
+            },
+            "description": "Partidos paginados para el panel administrativo. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Crear partido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sport\": \"Fútbol\",\n  \"league\": \"Prueba\",\n  \"home\": \"Local FC\",\n  \"away\": \"Visitante FC\",\n  \"localOdds\": 1.85,\n  \"drawOdds\": 3.2,\n  \"awayOdds\": 4.1,\n  \"minute\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/matches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "matches"
+              ]
+            },
+            "description": "Crea un partido simulado y lo publica en Kafka. Cuotas entre 1.01 y 100.00. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Actualizar cuotas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"localOdds\": 1.9,\n  \"drawOdds\": 3.3,\n  \"awayOdds\": 4.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/matches/{{matchId}}/odds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "matches",
+                "{{matchId}}",
+                "odds"
+              ]
+            },
+            "description": "Actualiza las cuotas de un partido. Requiere matchId y token de ADMIN."
+          }
+        },
+        {
+          "name": "Pagos administrativos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "payments"
+              ]
+            },
+            "description": "Pagos vistos por administración. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Ledger",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/ledger",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "ledger"
+              ]
+            },
+            "description": "Asientos del ledger. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Retiros pendientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "withdrawals"
+              ]
+            },
+            "description": "Retiros que requieren revisión. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Aprobar retiro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/withdrawals/{{withdrawalId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "withdrawals",
+                "{{withdrawalId}}",
+                "approve"
+              ]
+            },
+            "description": "Aprueba un retiro pendiente. Requiere withdrawalId y token de ADMIN."
+          }
+        },
+        {
+          "name": "Listar promociones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/promotions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "promotions"
+              ]
+            },
+            "description": "Historial de campañas. Requiere token de ADMIN."
+          }
+        },
+        {
+          "name": "Crear promoción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Prueba desde Postman\",\n  \"detail\": \"Mensaje de prueba enviado a todos los usuarios\",\n  \"scheduledAt\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/promotions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "promotions"
+              ]
+            },
+            "description": "Envía una promoción a todos los usuarios por bandeja, web, móvil y correo. En producción tiene efecto real: úsela solo con autorización. scheduledAt en ISO 8601 o null para envío inmediato. Requiere token de ADMIN. Guarda promoId en Postman."
+          }
+        },
+        {
+          "name": "Cancelar promoción",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/promotions/{{promoId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "promotions",
+                "{{promoId}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancela una promoción programada. Requiere promoId y token de ADMIN."
+          }
+        },
+        {
+          "name": "Correo de prueba",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"kind\": \"PROMO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/mail/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "mail",
+                "test"
+              ]
+            },
+            "description": "Envía un correo de prueba. kind: WIN, LOSS o PROMO. Requiere token de ADMIN."
+          }
+        }
+      ]
+    }
+  ]
+}
