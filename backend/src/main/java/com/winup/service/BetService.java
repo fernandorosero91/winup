@@ -34,7 +34,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class BetService {
@@ -135,8 +137,13 @@ public class BetService {
     }
 
     public List<BetDto> list(String userId) {
-        return betRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(bet -> betMapper.toDto(bet, matchRepository.findById(bet.getMatchId()).orElse(null)))
+        List<BetEntity> bets = betRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        Map<UUID, MatchEntity> matches = matchRepository
+                .findAllById(bets.stream().map(BetEntity::getMatchId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(MatchEntity::getId, match -> match));
+        return bets.stream()
+                .map(bet -> betMapper.toDto(bet, matches.get(bet.getMatchId())))
                 .toList();
     }
 

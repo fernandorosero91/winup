@@ -142,8 +142,7 @@ public class AdminService {
     }
 
     public List<MatchDto> matches() {
-        return matchRepository.findAllByOrderByCreatedAtDesc().stream()
-                .limit(50)
+        return matchRepository.findTop50ByOrderByCreatedAtDesc().stream()
                 .map(matchMapper::toDto)
                 .toList();
     }

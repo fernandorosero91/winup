@@ -41,8 +41,8 @@ public class MatchService {
         return matchRepository.save(matchFactory.createForSport(sport));
     }
 
-    public List<MatchEntity> all() {
-        return matchRepository.findAllByOrderByCreatedAtDesc();
+    public long count() {
+        return matchRepository.count();
     }
 
     public MatchPageDto page(String status, String sport, int page, int size) {
