@@ -23,6 +23,9 @@ export class AuthPage {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly showLoginPassword = signal(false);
+  readonly showRegisterPassword = signal(false);
+  readonly showRegisterConfirm = signal(false);
 
   readonly loginForm = this.forms.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -51,7 +54,22 @@ export class AuthPage {
     effect(() => {
       this.mode();
       this.error.set(null);
+      this.showLoginPassword.set(false);
+      this.showRegisterPassword.set(false);
+      this.showRegisterConfirm.set(false);
     });
+  }
+
+  toggleLoginPassword(): void {
+    this.showLoginPassword.update((visible) => !visible);
+  }
+
+  toggleRegisterPassword(): void {
+    this.showRegisterPassword.update((visible) => !visible);
+  }
+
+  toggleRegisterConfirm(): void {
+    this.showRegisterConfirm.update((visible) => !visible);
   }
 
   submitLogin(): void {
