@@ -179,6 +179,7 @@
 
 .slip-column {
   min-width: 0;
+  align-self: stretch;
 }
 
 @media (max-width: 1180px) {
