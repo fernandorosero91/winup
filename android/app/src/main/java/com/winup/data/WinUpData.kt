@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -84,6 +86,7 @@ object WinUpData {
     var loading by mutableStateOf(false)
     var error by mutableStateOf<String?>(null)
     var sportFilter by mutableStateOf("TODOS")
+    private var cacheRestored = false
 
     suspend fun selectSport(api: WinUpApiService, sport: String) {
         if (sportFilter == sport) {
@@ -93,25 +96,46 @@ object WinUpData {
         refresh(api)
     }
 
-    suspend fun refresh(api: WinUpApiService) {
+    suspend fun refresh(api: WinUpApiService) = coroutineScope {
+        restoreCache()
         loading = true
         try {
-            val page = api.matches(status = "EN VIVO", sport = sportFilter, page = 0, size = 50)
+            val matchesTask = async {
+                api.matches(status = "EN VIVO", sport = sportFilter, page = 0, size = 24)
+            }
+            val betsTask = async { api.bets() }
+            val notificationsTask = async { api.notifications() }
+            val readTask = async { api.readNotifications() }
+            val walletTask = async { api.wallet() }
+            val movementsTask = async { api.movements(page = 0, size = 20) }
+
+            val page = matchesTask.await()
             matches.clear()
             matches.addAll(page.items.map { it.toUi() })
 
-            val betsPage = api.bets()
+            val betsPage = betsTask.await()
             bets.clear()
             bets.addAll(betsPage.map { it.toUi() })
 
-            refreshNotifications(api)
+            val items = notificationsTask.await()
+            notifications.clear()
+            notifications.addAll(items.map {
+                NotificationItem(it.id, it.kind, it.title, it.detail, it.date)
+            })
 
-            val wallet = api.wallet()
+            val read = readTask.await()
+            readNotifications.clear()
+            readNotifications.addAll(read)
+
+            val wallet = walletTask.await()
             balance = wallet.balance.toBigDecimal()
             heldBalance = wallet.heldBalance.toBigDecimal()
             incomeTotal = wallet.income.toBigDecimal()
             expensesTotal = wallet.expenses.toBigDecimal()
-            loadMovements(api, 0)
+
+            val movementsPage = movementsTask.await()
+            applyMovementPage(movementsPage, replace = true)
+            saveCache(page, betsPage, wallet, movementsPage)
             error = null
         } catch (exception: Exception) {
             error = exception.message ?: "No se pudieron cargar los datos"
@@ -132,9 +156,54 @@ object WinUpData {
         }
     }
 
+    private fun restoreCache() {
+        if (cacheRestored) {
+            return
+        }
+        cacheRestored = true
+        val user = WinUpSession.user.value?.id ?: return
+        val matchesPage = WinUpCache.read("matches.$user", MatchPageDto.serializer())
+        if (matchesPage != null) {
+            matches.clear()
+            matches.addAll(matchesPage.items.map { it.toUi() })
+        }
+        val betsPage = WinUpCache.read("bets.$user", kotlinx.serialization.builtins.ListSerializer(BetDto.serializer()))
+        if (betsPage != null) {
+            bets.clear()
+            bets.addAll(betsPage.map { it.toUi() })
+        }
+        val wallet = WinUpCache.read("wallet.$user", WalletDto.serializer())
+        if (wallet != null) {
+            balance = wallet.balance.toBigDecimal()
+            heldBalance = wallet.heldBalance.toBigDecimal()
+            incomeTotal = wallet.income.toBigDecimal()
+            expensesTotal = wallet.expenses.toBigDecimal()
+        }
+        val movementsPage = WinUpCache.read("movements.$user", MovementPageDto.serializer())
+        if (movementsPage != null) {
+            applyMovementPage(movementsPage, replace = true)
+        }
+    }
+
+    private fun saveCache(
+        matchesPage: MatchPageDto,
+        betsPage: List<BetDto>,
+        wallet: WalletDto,
+        movementsPage: MovementPageDto,
+    ) {
+        val user = WinUpSession.user.value?.id ?: return
+        WinUpCache.write("matches.$user", Json.encodeToString(MatchPageDto.serializer(), matchesPage))
+        WinUpCache.write("bets.$user", Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(BetDto.serializer()), betsPage))
+        WinUpCache.write("wallet.$user", Json.encodeToString(WalletDto.serializer(), wallet))
+        WinUpCache.write("movements.$user", Json.encodeToString(MovementPageDto.serializer(), movementsPage))
+    }
+
     private suspend fun loadMovements(api: WinUpApiService, page: Int) {
-        val result = api.movements(page = page, size = 20)
-        if (page == 0) {
+        applyMovementPage(api.movements(page = page, size = 20), replace = page == 0)
+    }
+
+    private fun applyMovementPage(result: MovementPageDto, replace: Boolean) {
+        if (replace) {
             movements.clear()
         }
         movements.addAll(result.items.map { it.toUi() })
