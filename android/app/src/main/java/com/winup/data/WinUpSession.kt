@@ -15,6 +15,7 @@ object WinUpSession {
             return
         }
         store = TokenStore(context.applicationContext)
+        WinUpCache.init(context.applicationContext)
         api = ApiClient.service()
         token.value = store.token
         user.value = store.user

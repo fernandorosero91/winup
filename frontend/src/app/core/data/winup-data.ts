@@ -1,4 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { AuthStore } from '../auth/auth-store';
+import { readCache, writeCache } from './winup-cache';
 import { Observable, tap, throwError } from 'rxjs';
 import { WinupApi, toMovement } from '../api/winup-api';
 import type { RealtimeMatchEvent } from '../realtime/realtime.service';
@@ -21,12 +23,43 @@ const MOVEMENTS_PAGE_SIZE = 20;
 @Injectable({ providedIn: 'root' })
 export class WinupData {
   private readonly api = inject(WinupApi);
+  private readonly auth = inject(AuthStore);
   private requestId = 0;
+
+  constructor() {
+    const user = this.auth.user()?.id;
+    if (!user) {
+      return;
+    }
+    const wallet = readCache<Wallet>(`wallet.${user}`);
+    const bets = readCache<Bet[]>(`bets.${user}`);
+    const movements = readCache<{
+      items: Movement[];
+      page: number;
+      total: number;
+      hasNext: boolean;
+    }>(`movements.${user}`);
+    if (wallet) {
+      this.wallet.set(wallet);
+    }
+    if (bets) {
+      this.bets.set(bets);
+    }
+    if (movements) {
+      this.movements.set(movements.items);
+      this.movementPage.set(movements.page);
+      this.movementTotal.set(movements.total);
+      this.movementHasNext.set(movements.hasNext);
+    }
+  }
 
   refresh(): void {
     this.fetch(this.page(), PAGE_SIZE, 'background');
     this.api.bets().subscribe({
-      next: (bets) => this.bets.set(bets),
+      next: (bets) => {
+        this.bets.set(bets);
+        writeCache(`bets.${this.cacheUser()}`, bets);
+      },
       error: () => undefined,
     });
     this.api.notifications().subscribe({
@@ -39,23 +72,32 @@ export class WinupData {
     });
     this.api.wallet().subscribe({
       next: (wallet) => {
-        this.wallet.set({
+        const nextWallet: Wallet = {
           balance: Number(wallet.balance),
           heldBalance: Number(wallet.heldBalance ?? 0),
           currency: wallet.currency,
           income: Number(wallet.income),
           expenses: Number(wallet.expenses),
           movementCount: wallet.movementCount,
-        });
+        };
+        this.wallet.set(nextWallet);
+        writeCache(`wallet.${this.cacheUser()}`, nextWallet);
       },
       error: () => undefined,
     });
     this.api.movements(0, MOVEMENTS_PAGE_SIZE).subscribe({
       next: (page) => {
-        this.movements.set(page.items.map(toMovement));
+        const items = page.items.map(toMovement);
+        this.movements.set(items);
         this.movementPage.set(page.page);
         this.movementTotal.set(page.totalElements);
         this.movementHasNext.set(page.hasNext);
+        writeCache(`movements.${this.cacheUser()}`, {
+          items,
+          page: page.page,
+          total: page.totalElements,
+          hasNext: page.hasNext,
+        });
       },
       error: () => undefined,
     });
@@ -153,7 +195,15 @@ export class WinupData {
 
   private fetch(page: number, size: number, mode: FetchMode): void {
     const request = ++this.requestId;
-    if (mode === 'initial') {
+    const cacheKey = `matches.${this.statusFilter()}.${this.sportFilter()}.${page}`;
+    const cached = readCache<{ items: Match[]; total: number }>(cacheKey);
+    if (cached && mode !== 'background') {
+      this.matches.set(cached.items);
+      this.total.set(cached.total);
+      this.syncSelection();
+      this.loading.set(false);
+    }
+    if (mode === 'initial' && !cached) {
       this.loading.set(true);
     }
     if (mode === 'page') {
@@ -173,6 +223,7 @@ export class WinupData {
           }
           this.matches.set(result.items);
           this.total.set(result.total);
+          writeCache(cacheKey, { items: result.items, total: result.total });
           this.syncSelection();
           this.loading.set(false);
           this.loadingPage.set(false);
@@ -185,6 +236,10 @@ export class WinupData {
           this.loadingPage.set(false);
         },
       });
+  }
+
+  private cacheUser(): string {
+    return this.auth.user()?.id ?? 'anon';
   }
 
   private syncSelection(): void {
@@ -233,6 +288,12 @@ export class WinupData {
         this.movementPage.set(page.page);
         this.movementTotal.set(page.totalElements);
         this.movementHasNext.set(page.hasNext);
+        writeCache(`movements.${this.cacheUser()}`, {
+          items: this.movements(),
+          page: page.page,
+          total: page.totalElements,
+          hasNext: page.hasNext,
+        });
       },
       error: () => this.movementsLoading.set(false),
       complete: () => this.movementsLoading.set(false),

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { clearCache } from '../data/winup-cache';
 
 export interface AuthUser {
   id: string;
@@ -58,6 +59,7 @@ export class AuthStore {
     this.user.set(null);
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(USER_KEY);
+    clearCache();
   }
 
   private persist(response: AuthResponse): void {

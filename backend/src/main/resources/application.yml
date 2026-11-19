@@ -1,5 +1,9 @@
 server:
   port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,text/plain,text/css,application/javascript
+    min-response-size: 1024
 
 spring:
   application:
@@ -20,6 +24,14 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/winup}
     username: ${SPRING_DATASOURCE_USERNAME:winup}
     password: ${SPRING_DATASOURCE_PASSWORD:winup}
+    hikari:
+      maximum-pool-size: ${WINUP_DB_POOL_MAX:10}
+      minimum-idle: ${WINUP_DB_POOL_MIN_IDLE:2}
+      connection-timeout: ${WINUP_DB_CONNECTION_TIMEOUT_MS:10000}
+      validation-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 300000
   jpa:
     hibernate:
       ddl-auto: update
