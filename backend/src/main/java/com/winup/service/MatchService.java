@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -62,23 +64,26 @@ public class MatchService {
     }
 
     public List<SportSummaryDto> sports() {
+        Map<String, MatchRepository.SportCount> counts = matchRepository
+                .countBySportStatus(MatchStatus.OPEN.code(), MatchStatus.CLOSED.code())
+                .stream()
+                .collect(Collectors.toMap(MatchRepository.SportCount::getSport, count -> count));
         return SportCatalog.SPORTS.stream()
-                .map(sport -> new SportSummaryDto(
-                        sport,
-                        matchRepository.countBySportAndStatusAndMinuteGreaterThan(
-                                sport,
-                                MatchStatus.OPEN.code(),
-                                0
-                        ),
-                        matchRepository.countBySportAndStatusAndMinute(
-                                sport,
-                                MatchStatus.OPEN.code(),
-                                0
-                        ),
-                        matchRepository.countBySportAndStatus(sport, MatchStatus.CLOSED.code()),
-                        matchRepository.countBySport(sport)
-                ))
+                .map(sport -> summary(sport, counts.get(sport)))
                 .toList();
+    }
+
+    private SportSummaryDto summary(String sport, MatchRepository.SportCount count) {
+        if (count == null) {
+            return new SportSummaryDto(sport, 0, 0, 0, 0);
+        }
+        return new SportSummaryDto(
+                sport,
+                count.getLive() == null ? 0 : count.getLive(),
+                count.getUpcoming() == null ? 0 : count.getUpcoming(),
+                count.getFinished() == null ? 0 : count.getFinished(),
+                count.getTotal() == null ? 0 : count.getTotal()
+        );
     }
 
     private String normalizeStatus(String status) {

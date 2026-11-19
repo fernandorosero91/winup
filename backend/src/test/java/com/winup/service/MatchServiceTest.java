@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,10 +95,13 @@ class MatchServiceTest {
 
     @Test
     void should_return_summary_for_each_supported_sport() {
-        when(matchRepository.countBySportAndStatusAndMinuteGreaterThan("Fútbol", "OPEN", 0)).thenReturn(3L);
-        when(matchRepository.countBySportAndStatusAndMinute("Fútbol", "OPEN", 0)).thenReturn(2L);
-        when(matchRepository.countBySportAndStatus("Fútbol", "CLOSED")).thenReturn(5L);
-        when(matchRepository.countBySport("Fútbol")).thenReturn(10L);
+        MatchRepository.SportCount count = mock(MatchRepository.SportCount.class);
+        when(count.getSport()).thenReturn("Fútbol");
+        when(count.getLive()).thenReturn(3L);
+        when(count.getUpcoming()).thenReturn(2L);
+        when(count.getFinished()).thenReturn(5L);
+        when(count.getTotal()).thenReturn(10L);
+        when(matchRepository.countBySportStatus("OPEN", "CLOSED")).thenReturn(List.of(count));
 
         List<SportSummaryDto> result = matchService.sports();
 
@@ -108,6 +112,21 @@ class MatchServiceTest {
         assertThat(football.upcoming()).isEqualTo(2);
         assertThat(football.finished()).isEqualTo(5);
         assertThat(football.total()).isEqualTo(10);
+    }
+
+    @Test
+    void should_return_zeroes_for_a_sport_without_matches() {
+        when(matchRepository.countBySportStatus("OPEN", "CLOSED")).thenReturn(List.of());
+
+        List<SportSummaryDto> result = matchService.sports();
+
+        assertThat(result)
+                .allSatisfy(summary -> {
+                    assertThat(summary.live()).isZero();
+                    assertThat(summary.upcoming()).isZero();
+                    assertThat(summary.finished()).isZero();
+                    assertThat(summary.total()).isZero();
+                });
     }
 
     private MatchEntity liveMatch() {

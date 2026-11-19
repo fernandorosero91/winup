@@ -12,6 +12,18 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MatchRepository extends JpaRepository<MatchEntity, UUID> {
+    interface SportCount {
+        String getSport();
+
+        Long getLive();
+
+        Long getUpcoming();
+
+        Long getFinished();
+
+        Long getTotal();
+    }
+
     List<MatchEntity> findAllByOrderByCreatedAtDesc();
 
     long countByStatus(String status);
@@ -36,6 +48,20 @@ public interface MatchRepository extends JpaRepository<MatchEntity, UUID> {
             String status,
             int minute,
             Instant startsAt
+    );
+
+    @Query("""
+            select m.sport as sport,
+                   sum(case when m.status = :open and m.minute > 0 then 1 else 0 end) as live,
+                   sum(case when m.status = :open and m.minute = 0 then 1 else 0 end) as upcoming,
+                   sum(case when m.status = :closed then 1 else 0 end) as finished,
+                   count(m) as total
+            from MatchEntity m
+            group by m.sport
+            """)
+    List<SportCount> countBySportStatus(
+            @Param("open") String open,
+            @Param("closed") String closed
     );
 
     @Query("select distinct m.sport from MatchEntity m where m.status = :status")
