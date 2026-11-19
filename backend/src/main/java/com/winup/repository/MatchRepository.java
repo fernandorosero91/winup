@@ -24,7 +24,7 @@ public interface MatchRepository extends JpaRepository<MatchEntity, UUID> {
         Long getTotal();
     }
 
-    List<MatchEntity> findAllByOrderByCreatedAtDesc();
+    List<MatchEntity> findTop50ByOrderByCreatedAtDesc();
 
     long countByStatus(String status);
 

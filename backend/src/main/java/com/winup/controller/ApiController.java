@@ -119,7 +119,7 @@ public class ApiController {
     public Map<String, Object> health() {
         return Map.of(
                 "status", "UP",
-                "matches", matchService.all().size(),
+                "matches", matchService.count(),
                 "websocket", socketHandler.connections()
         );
     }

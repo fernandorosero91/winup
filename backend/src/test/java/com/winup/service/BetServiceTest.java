@@ -1,5 +1,6 @@
 package com.winup.service;
 
+import com.winup.entity.BetEntity;
 import com.winup.entity.MatchEntity;
 import com.winup.entity.MovementEntity;
 import com.winup.entity.WalletEntity;
@@ -105,6 +106,23 @@ class BetServiceTest {
                         assertThat(exception.code()).isEqualTo("INVALID_SELECTION"));
 
         verify(walletRepository, never()).findWithLockByUserId(any());
+    }
+
+    @Test
+    void should_load_all_bets_with_one_match_query() {
+        BetEntity first = new BetEntity();
+        first.setId(UUID.randomUUID());
+        first.setMatchId(MATCH_ID);
+        BetEntity second = new BetEntity();
+        second.setId(UUID.randomUUID());
+        second.setMatchId(MATCH_ID);
+        when(betRepository.findByUserIdOrderByCreatedAtDesc(USER)).thenReturn(List.of(first, second));
+        when(matchRepository.findAllById(any())).thenReturn(List.of(openMatch()));
+
+        betService.list(USER);
+
+        verify(matchRepository).findAllById(any());
+        verify(matchRepository, never()).findById(any());
     }
 
     @Test
